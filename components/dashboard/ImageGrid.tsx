@@ -30,6 +30,7 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
   const [viewingImage, setViewingImage] = useState<ImageItem | null>(null)
   const [viewingAudio, setViewingAudio] = useState<ImageItem | null>(null)
   const [viewingInfo, setViewingInfo] = useState<ImageItem | null>(null)
+  const [fileToDelete, setFileToDelete] = useState<ImageItem | null>(null)
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([])
   const [bulkDeleting, setBulkDeleting] = useState(false)
@@ -45,14 +46,20 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  async function handleDelete(slug: string) {
+  async function confirmDelete(slug: string) {
     setDeleting(slug)
-    setActiveMenu(null)
-    await fetch(`/api/images/${slug}`, { method: 'DELETE' })
-    setDeleting(null)
-    setSelectedSlugs(prev => prev.filter(s => s !== slug))
-    toast.success('File deleted successfully!')
-    router.refresh()
+    try {
+      const res = await fetch(`/api/images/${slug}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      toast.success('File deleted successfully!')
+      setSelectedSlugs(prev => prev.filter(s => s !== slug))
+      router.refresh()
+    } catch (e) {
+      toast.error('Failed to delete file')
+    } finally {
+      setDeleting(null)
+      setFileToDelete(null)
+    }
   }
 
   async function handleCopy(slug: string) {
@@ -83,7 +90,7 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
 
   async function handleDeleteAll() {
     if (selectedSlugs.length === 0) return
-    if (!confirm(`Delete ${selectedSlugs.length} selected files?`)) return
+    if (!confirm(`Are you sure you want to delete ${selectedSlugs.length} selected files? This will remove them from storage and Telegram.`)) return
 
     setBulkDeleting(true)
     try {
@@ -196,8 +203,10 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
                       <Info className="w-4 h-4 text-blue-400" /> File Info
                     </button>
                     <button
-                      onClick={() => handleDelete(img.slug)}
-                      disabled={deleting === img.slug}
+                      onClick={() => {
+                        setActiveMenu(null)
+                        setFileToDelete(img)
+                      }}
                       className="w-full text-left px-4 py-2.5 text-red-400 hover:bg-white/5 flex items-center gap-2.5 transition-colors font-medium"
                     >
                       <Trash2 className="w-4 h-4" /> Delete
@@ -400,6 +409,32 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
                 className="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {fileToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-base font-semibold text-white">Delete File?</h3>
+            <p className="text-xs text-[#888] leading-relaxed">
+              Are you sure you want to delete <span className="text-white font-medium truncate inline-block max-w-[200px] align-bottom" title={fileToDelete.fileName}>"{fileToDelete.fileName}"</span>? This will permanently remove the file from storage and Telegram.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setFileToDelete(null)}
+                className="text-xs text-[#888] hover:text-white px-3 py-2 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => confirmDelete(fileToDelete.slug)}
+                disabled={deleting === fileToDelete.slug}
+                className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                {deleting === fileToDelete.slug ? 'Deleting...' : 'Delete File'}
               </button>
             </div>
           </div>

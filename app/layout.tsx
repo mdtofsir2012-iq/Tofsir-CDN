@@ -9,8 +9,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "imgstorage",
-  description: "Free image storage API powered by Telegram",
+  title: "Tofsir CDN",
+  description: "Fast media storage & CDN powered by Telegram",
 };
 
 export default function RootLayout({

@@ -28,6 +28,7 @@ export default function AudioGrid({ audios }: { audios: AudioItem[] }) {
   const [copied, setCopied] = useState<string | null>(null)
   const [viewingAudio, setViewingAudio] = useState<AudioItem | null>(null)
   const [viewingInfo, setViewingInfo] = useState<AudioItem | null>(null)
+  const [fileToDelete, setFileToDelete] = useState<AudioItem | null>(null)
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([])
   const [bulkDeleting, setBulkDeleting] = useState(false)
@@ -43,14 +44,20 @@ export default function AudioGrid({ audios }: { audios: AudioItem[] }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  async function handleDelete(slug: string) {
+  async function confirmDelete(slug: string) {
     setDeleting(slug)
-    setActiveMenu(null)
-    await fetch(`/api/images/${slug}`, { method: 'DELETE' })
-    setDeleting(null)
-    setSelectedSlugs(prev => prev.filter(s => s !== slug))
-    toast.success('Audio deleted successfully!')
-    router.refresh()
+    try {
+      const res = await fetch(`/api/images/${slug}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      toast.success('Audio deleted successfully!')
+      setSelectedSlugs(prev => prev.filter(s => s !== slug))
+      router.refresh()
+    } catch (e) {
+      toast.error('Failed to delete audio')
+    } finally {
+      setDeleting(null)
+      setFileToDelete(null)
+    }
   }
 
   async function handleCopy(slug: string) {
@@ -81,7 +88,7 @@ export default function AudioGrid({ audios }: { audios: AudioItem[] }) {
 
   async function handleDeleteAll() {
     if (selectedSlugs.length === 0) return
-    if (!confirm(`Delete ${selectedSlugs.length} selected audio files?`)) return
+    if (!confirm(`Are you sure you want to delete ${selectedSlugs.length} selected audio files? This will remove them from storage and Telegram.`)) return
 
     setBulkDeleting(true)
     try {
@@ -190,8 +197,10 @@ export default function AudioGrid({ audios }: { audios: AudioItem[] }) {
                       <Info className="w-4 h-4 text-purple-400" /> File Info
                     </button>
                     <button
-                      onClick={() => handleDelete(audio.slug)}
-                      disabled={deleting === audio.slug}
+                      onClick={() => {
+                        setActiveMenu(null)
+                        setFileToDelete(audio)
+                      }}
                       className="w-full text-left px-4 py-2.5 text-red-400 hover:bg-white/5 flex items-center gap-2.5 transition-colors font-medium"
                     >
                       <Trash2 className="w-4 h-4" /> Delete
@@ -344,6 +353,32 @@ export default function AudioGrid({ audios }: { audios: AudioItem[] }) {
                 className="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {fileToDelete && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-base font-semibold text-white">Delete Audio?</h3>
+            <p className="text-xs text-[#888] leading-relaxed">
+              Are you sure you want to delete <span className="text-white font-medium truncate inline-block max-w-[200px] align-bottom" title={fileToDelete.fileName}>"{fileToDelete.fileName}"</span>? This will permanently remove the audio from storage and Telegram.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setFileToDelete(null)}
+                className="text-xs text-[#888] hover:text-white px-3 py-2 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => confirmDelete(fileToDelete.slug)}
+                disabled={deleting === fileToDelete.slug}
+                className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                {deleting === fileToDelete.slug ? 'Deleting...' : 'Delete Audio'}
               </button>
             </div>
           </div>

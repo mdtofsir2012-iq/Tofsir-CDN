@@ -375,7 +375,7 @@ export default function LandingPage() {
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
             <span className="text-xl font-bold tracking-tight text-[#E5E5E5]">
-              ImgStorage
+              Tofsir CDN
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#E5E5E5]/80">
@@ -748,7 +748,7 @@ export default function LandingPage() {
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
             <span className="text-lg font-bold tracking-tight text-[#E5E5E5]">
-              ImgStorage
+              Tofsir CDN
             </span>
           </div>
 

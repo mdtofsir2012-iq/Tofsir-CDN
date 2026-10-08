@@ -263,17 +263,26 @@ export async function getImageUrl(
   return `https://api.telegram.org/file/bot${botToken}/${filePath}`
 }
 
-export async function deleteImageFromTelegram(messageId: number): Promise<void> {
-  const { botToken, channelId } = await getTelegramConfig().catch(() => ({ botToken: '', channelId: '' }))
-  if (!botToken || !channelId) return
+export async function deleteImageFromTelegram(messageId: number, fileType?: 'image' | 'video' | 'audio'): Promise<void> {
+  try {
+    const config = await getTelegramConfig(fileType).catch(() => null)
+    if (!config || !config.botToken || !config.channelId) return
 
-  const BASE = `https://api.telegram.0rg/bot${botToken}`.replace('.0rg', '.org')
-  await fetchWithTimeout(`${BASE}/deleteMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: channelId,
-      message_id: messageId,
-    }),
-  }, 5000)
+    const { botToken, channelId } = config
+    const BASE = `https://api.telegram.org/bot${botToken}`
+    const res = await fetchWithTimeout(`${BASE}/deleteMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: channelId,
+        message_id: messageId,
+      }),
+    }, 8000)
+    const json = await res.json().catch(() => null)
+    if (!json?.ok) {
+      console.warn('Telegram deleteMessage returned error:', json)
+    }
+  } catch (e) {
+    console.error('Failed to delete message from Telegram:', e)
+  }
 }

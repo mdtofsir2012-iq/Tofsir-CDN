@@ -13,17 +13,20 @@ export async function DELETE(
   if (!mediaResult) return NextResponse.json({ error: 'Media not found' }, { status: 404 })
 
   const imageDoc = mediaResult.doc
+  const collectionName = mediaResult.collectionName
   const image = imageDoc.data() as any
 
   if (image.userId !== userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
+  const fileType = collectionName === 'videos' ? 'video' : collectionName === 'audios' ? 'audio' : 'image'
+
   if (image.telegramMsgId) {
     try {
       await Promise.race([
-        deleteImageFromTelegram(Number(image.telegramMsgId)),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+        deleteImageFromTelegram(Number(image.telegramMsgId), fileType),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000))
       ])
     } catch (e) {
       console.warn('Telegram delete skipped/timed out, deleting from DB instantly:', e)

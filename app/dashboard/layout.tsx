@@ -38,7 +38,7 @@ export default async function DashboardLayout({
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#0a0a0a"/>
               </svg>
             </div>
-            <span className="font-semibold text-sm text-white">ImgStorage</span>
+            <span className="font-semibold text-sm text-white">Tofsir CDN</span>
           </div>
         </div>
 

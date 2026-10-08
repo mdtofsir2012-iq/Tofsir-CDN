@@ -29,15 +29,18 @@ export async function DELETE(
   if (!mediaResult) return NextResponse.json({ error: 'Media not found' }, { status: 404, headers: corsHeaders() })
 
   const imageDoc = mediaResult.doc
+  const collectionName = mediaResult.collectionName
   const image = imageDoc.data() as any
 
   if (image.apiKeyId !== apiKeyId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders() })
   }
 
+  const fileType = collectionName === 'videos' ? 'video' : collectionName === 'audios' ? 'audio' : 'image'
+
   if (image.telegramMsgId) {
     try {
-      await deleteImageFromTelegram(Number(image.telegramMsgId))
+      await deleteImageFromTelegram(Number(image.telegramMsgId), fileType)
     } catch (e) {
       console.error('Telegram deletion failed:', e)
     }
