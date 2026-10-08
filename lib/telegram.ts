@@ -198,7 +198,25 @@ export async function uploadImageToTelegram(
   return uploadToTelegramStreamWithProgress(file, fileType, () => {})
 }
 
-export async function getImageUrl(fileId: string, mimeType?: string, fileName?: string): Promise<string> {
+export async function getTelegramFilePath(fileId: string, fileType: 'image' | 'video' | 'audio'): Promise<string> {
+  try {
+    const { botToken } = await getTelegramConfig(fileType)
+    const res = await fetchWithTimeout(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`, {}, 8000)
+    const data = await res.json()
+    if (data.ok && data.result?.file_path) {
+      return data.result.file_path
+    }
+  } catch (e) {}
+  return ''
+}
+
+export async function getImageUrl(
+  fileId: string,
+  mimeType?: string,
+  fileName?: string,
+  docRef?: any,
+  existingFilePath?: string
+): Promise<string> {
   const isAudio = mimeType?.startsWith('audio/') || ['.mp3', '.wav', '.ogg', '.m4a', '.aac'].some(ext => fileName?.toLowerCase().endsWith(ext))
   const isVideo = mimeType === 'video/mp4' || fileName?.toLowerCase().endsWith('.mp4')
   const fileType = isAudio ? 'audio' : isVideo ? 'video' : 'image'
@@ -227,11 +245,22 @@ export async function getImageUrl(fileId: string, mimeType?: string, fileName?: 
 
   if (!botToken) throw new Error('Telegram Bot Token is not configured.')
 
+  if (existingFilePath) {
+    return `https://api.telegram.org/file/bot${botToken}/${existingFilePath}`
+  }
+
   const BASE = `https://api.telegram.org/bot${botToken}`
   const res = await fetchWithTimeout(`${BASE}/getFile?file_id=${fileId}`, {}, 15000)
   const data = await res.json()
   if (!data.ok) throw new Error(`Telegram error: ${data.description}`)
-  return `https://api.telegram.org/file/bot${botToken}/${data.result.file_path}`
+
+  const filePath = data.result.file_path
+
+  if (docRef) {
+    docRef.update({ telegramFilePath: filePath }).catch(() => {})
+  }
+
+  return `https://api.telegram.org/file/bot${botToken}/${filePath}`
 }
 
 export async function deleteImageFromTelegram(messageId: number): Promise<void> {

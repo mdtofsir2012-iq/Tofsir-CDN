@@ -44,6 +44,7 @@ export default async function ApiKeysPage() {
               name={key.name}
               apiKey={key.key}
               usageCount={key.usageCount || 0}
+              totalViews={key.totalViews || 0}
               type={key.type || 'all'}
               defaultLang={key.defaultLang}
               createdAt={key.createdAt instanceof Date ? key.createdAt.toISOString() : (key.createdAt?.toDate ? key.createdAt.toDate().toISOString() : new Date().toISOString())}

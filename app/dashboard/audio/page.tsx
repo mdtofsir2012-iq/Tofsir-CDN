@@ -1,18 +1,13 @@
 import UploadZone from '@/components/dashboard/UploadZone'
 import AudioGrid from '@/components/dashboard/AudioGrid'
-import { getImagesData } from '@/lib/dashboard-data'
+import { getAudiosData } from '@/lib/dashboard-data'
 import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic';
 
 export default async function AudioPage() {
   const { user } = await getCurrentUser()
-  const images = await getImagesData(user.id)
-
-  const audios = images.filter((img: any) =>
-    img.mimeType?.startsWith('audio/') ||
-    ['.mp3', '.wav', '.ogg', '.m4a', '.aac'].some(ext => img.fileName?.toLowerCase().endsWith(ext))
-  )
+  const audios = await getAudiosData(user.id)
 
   const serialized = audios.map((img: typeof audios[number]) => ({
     id: img.id,
@@ -21,6 +16,7 @@ export default async function AudioPage() {
     fileSizeMb: img.fileSizeMb,
     mimeType: img.mimeType,
     telegramMsgId: img.telegramMsgId,
+    views: img.views || 0,
     createdAt: img.createdAt instanceof Date ? img.createdAt.toISOString() : (img.createdAt?.toDate ? img.createdAt.toDate().toISOString() : new Date().toISOString())
   }))
 

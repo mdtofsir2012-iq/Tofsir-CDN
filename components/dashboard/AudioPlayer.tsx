@@ -58,6 +58,18 @@ export default function AudioPlayer({ isOpen, onClose, audioUrl, fileName, fileS
     return 1
   })
 
+  const [hasTrackedView, setHasTrackedView] = useState(false)
+
+  const trackView = async () => {
+    if (hasTrackedView || !slug) return
+    try {
+      setHasTrackedView(true)
+      await fetch(`/api/views/${slug}`, { method: 'POST' })
+    } catch (e) {
+      console.error('Failed to track view', e)
+    }
+  }
+
   // Audio Visualizer Setup
   useEffect(() => {
     if (!audioRef.current || !canvasRef.current) return
@@ -140,6 +152,7 @@ export default function AudioPlayer({ isOpen, onClose, audioUrl, fileName, fileS
       setupAudioContext()
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
       drawVisualizer()
+      trackView()
     }
 
     const handlePauseEvent = () => {

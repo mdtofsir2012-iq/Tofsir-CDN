@@ -59,6 +59,8 @@ export default function VideoPlayer({ isOpen, onClose, videoUrl, fileName, fileS
 
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const [hasTrackedView, setHasTrackedView] = useState(false)
+
   // Apply persisted settings when video loads or source changes
   useEffect(() => {
     if (videoRef.current) {
@@ -72,6 +74,16 @@ export default function VideoPlayer({ isOpen, onClose, videoUrl, fileName, fileS
       })
     }
   }, [videoUrl, isMuted, volume, playbackRate])
+
+  const trackView = async () => {
+    if (hasTrackedView || !slug) return
+    try {
+      setHasTrackedView(true)
+      await fetch(`/api/views/${slug}`, { method: 'POST' })
+    } catch (e) {
+      console.error('Failed to track view', e)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -231,7 +243,10 @@ export default function VideoPlayer({ isOpen, onClose, videoUrl, fileName, fileS
           onEnded={() => setIsPlaying(false)}
           onDoubleClick={toggleFullscreen}
           onWaiting={() => setIsBuffering(true)}
-          onPlaying={() => setIsBuffering(false)}
+          onPlaying={() => {
+            setIsBuffering(false)
+            trackView()
+          }}
           onCanPlay={() => setIsBuffering(false)}
           className="w-full h-full object-contain"
         />

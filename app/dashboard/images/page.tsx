@@ -9,20 +9,14 @@ export default async function ImagesPage() {
   const { user } = await getCurrentUser()
   const images = await getImagesData(user.id)
 
-  const imagesOnly = images.filter((img: any) =>
-    img.mimeType !== 'video/mp4' &&
-    !img.fileName?.toLowerCase().endsWith('.mp4') &&
-    !img.mimeType?.startsWith('audio/') &&
-    !['.mp3', '.wav', '.ogg', '.m4a', '.aac'].some(ext => img.fileName?.toLowerCase().endsWith(ext))
-  )
-
-  const serialized = imagesOnly.map((img: typeof imagesOnly[number]) => ({
+  const serialized = images.map((img: typeof images[number]) => ({
     id: img.id,
     slug: img.slug,
     fileName: img.fileName,
     fileSizeMb: img.fileSizeMb,
     mimeType: img.mimeType,
     telegramMsgId: img.telegramMsgId,
+    views: img.views || 0,
     createdAt: img.createdAt instanceof Date ? img.createdAt.toISOString() : (img.createdAt?.toDate ? img.createdAt.toDate().toISOString() : new Date().toISOString())
   }))
 

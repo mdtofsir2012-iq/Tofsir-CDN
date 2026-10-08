@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb, findMediaBySlug } from '@/lib/firebase-admin'
 import { deleteImageFromTelegram } from '@/lib/telegram'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -9,11 +9,15 @@ export async function DELETE(
   const { slug } = await params
   const userId = 'admin'
 
-  const imagesSnap = await adminDb.collection("images").where("slug", "==", slug).where("userId", "==", userId).limit(1).get()
-  if (imagesSnap.empty) return NextResponse.json({ error: 'Image not found' }, { status: 404 })
+  const mediaResult = await findMediaBySlug(slug)
+  if (!mediaResult) return NextResponse.json({ error: 'Media not found' }, { status: 404 })
 
-  const imageDoc = imagesSnap.docs[0]
+  const imageDoc = mediaResult.doc
   const image = imageDoc.data() as any
+
+  if (image.userId !== userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  }
 
   if (image.telegramMsgId) {
     try {

@@ -26,6 +26,16 @@ const firebaseConfig = {
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 export const clientDb = getFirestore(app);
 
+export async function findMediaBySlug(slug: string) {
+  for (const col of ["images", "videos", "audios"]) {
+    const snap = await adminDb.collection(col).where("slug", "==", slug).limit(1).get()
+    if (!snap.empty) {
+      return { doc: snap.docs[0], collectionName: col }
+    }
+  }
+  return null
+}
+
 export const adminDb = {
   collection(collectionPath: string) {
     const colRef = collection(clientDb, collectionPath);
@@ -50,8 +60,8 @@ export const adminDb = {
               }
             };
           },
-          async set(data: any) {
-            return await setDoc(dRef, data);
+          async set(data: any, options?: any) {
+            return options ? await setDoc(dRef, data, options) : await setDoc(dRef, data);
           },
           async update(data: any) {
             return await updateDoc(dRef, data);

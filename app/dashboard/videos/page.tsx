@@ -1,19 +1,13 @@
 import UploadZone from '@/components/dashboard/UploadZone'
 import VideoGrid from '@/components/dashboard/VideoGrid'
-import { getImagesData } from '@/lib/dashboard-data'
+import { getVideosData } from '@/lib/dashboard-data'
 import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic';
 
 export default async function VideosPage() {
   const { user } = await getCurrentUser()
-  const images = await getImagesData(user.id)
-
-  const videos = images.filter((img: any) =>
-    (img.mimeType === 'video/mp4' || img.fileName?.toLowerCase().endsWith('.mp4')) &&
-    !img.mimeType?.startsWith('audio/') &&
-    !['.mp3', '.wav', '.ogg', '.m4a', '.aac'].some(ext => img.fileName?.toLowerCase().endsWith(ext))
-  )
+  const videos = await getVideosData(user.id)
 
   const serialized = videos.map((img: typeof videos[number]) => ({
     id: img.id,
@@ -22,6 +16,7 @@ export default async function VideosPage() {
     fileSizeMb: img.fileSizeMb,
     mimeType: img.mimeType,
     telegramMsgId: img.telegramMsgId,
+    views: img.views || 0,
     createdAt: img.createdAt instanceof Date ? img.createdAt.toISOString() : (img.createdAt?.toDate ? img.createdAt.toDate().toISOString() : new Date().toISOString())
   }))
 

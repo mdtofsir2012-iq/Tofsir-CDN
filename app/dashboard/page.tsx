@@ -1,7 +1,9 @@
 import { getCurrentUser } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
 import Link from "next/link";
-import Image from "next/image";
+import { Play, Music } from "lucide-react";
+import RealtimeViewCount from "@/components/dashboard/RealtimeViewCount";
+import { RealtimeTotalViews, RealtimeTotalUsage } from "@/components/dashboard/RealtimeTotalStats";
 
 export const dynamic = 'force-dynamic';
 
@@ -9,17 +11,32 @@ export default async function DashboardPage() {
   const { session } = await getCurrentUser();
   const userId = "admin";
 
-  const [keysSnap, imagesSnap] = await Promise.all([
+  const [keysSnap, imgSnap, vidSnap, audSnap] = await Promise.all([
     adminDb.collection("apiKeys").where("userId", "==", userId).orderBy("createdAt", "desc").get(),
-    adminDb.collection("images").where("userId", "==", userId).orderBy("createdAt", "desc").get(),
+    adminDb.collection("images").where("userId", "==", userId).get(),
+    adminDb.collection("videos").where("userId", "==", userId).get(),
+    adminDb.collection("audios").where("userId", "==", userId).get(),
   ]);
 
   const apiKeys = keysSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
-  const images = imagesSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+
+  const allMedia = [
+    ...imgSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })),
+    ...vidSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })),
+    ...audSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })),
+  ];
+
+  allMedia.sort((a, b) => {
+    const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime();
+    const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime();
+    return tB - tA;
+  });
 
   let totalSizeMb = 0;
-  images.forEach(img => {
+  let totalViews = 0;
+  allMedia.forEach(img => {
     if (typeof img.fileSizeMb === 'number') totalSizeMb += img.fileSizeMb;
+    if (typeof img.views === 'number') totalViews += img.views;
   });
 
   const userData = {
@@ -30,8 +47,8 @@ export default async function DashboardPage() {
   const user = {
     ...userData,
     apiKeys,
-    images: images.slice(0, 8),
-    _count: { images: images.length }
+    images: allMedia.slice(0, 8), // Show latest 8 items
+    _count: { images: allMedia.length }
   };
 
   const totalImages = user._count.images;
@@ -41,7 +58,7 @@ export default async function DashboardPage() {
   );
   const stats = [
     {
-      label: "Total Images",
+      label: "Total Uploads",
       value: totalImages.toLocaleString(),
       icon: (
         <svg
@@ -84,7 +101,7 @@ export default async function DashboardPage() {
     },
     {
       label: "API Requests",
-      value: totalUsage.toLocaleString(),
+      value: <RealtimeTotalUsage initialTotal={totalUsage} />,
       icon: (
         <svg
           width="14"
@@ -120,6 +137,26 @@ export default async function DashboardPage() {
         </svg>
       ),
     },
+    {
+      label: "Total Views",
+      value: <RealtimeTotalViews initialTotal={totalViews} />,
+      icon: (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-[#888]"
+        >
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      ),
+    },
   ];
 
   const recentUploads = user.images;
@@ -135,10 +172,10 @@ export default async function DashboardPage() {
             : new Date().getHours() < 17
             ? "afternoon"
             : "evening"}
-          , {session.user.name?.split(" ")[0]} 👋
+          , {session.user.name?.split(" ")[0] || "Admin"} 👋
         </h1>
         <p className="text-sm text-[#555] mt-1">
-          Here's what's happening with your images today
+          Here's what's happening with your media today
         </p>
       </div>
 
@@ -168,12 +205,6 @@ export default async function DashboardPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium text-white">Recent Uploads</h2>
-          <Link
-            href="/dashboard/images"
-            className="text-xs text-[#666] hover:text-white transition-colors"
-          >
-            View all →
-          </Link>
         </div>
 
         {recentUploads.length === 0 ? (
@@ -195,45 +226,90 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-[#ccc]">No images yet</p>
+              <p className="text-sm font-medium text-[#ccc]">No media yet</p>
               <p className="text-xs text-[#555] mt-0.5">
-                Upload your first image to get started
+                Upload your first image, video, or audio to get started
               </p>
             </div>
             <Link
               href="/dashboard/images"
               className="inline-block bg-white text-black text-xs font-medium px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              Upload image
+              Upload media
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-4">
-            {recentUploads.map((img: any) => (
-              <div
-                key={img.id}
-                className="group bg-[#111] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.15] transition-all"
-              >
-                <div className="aspect-square bg-white/[0.02] relative overflow-hidden flex items-center justify-center">
-                  <Image
-                    src={`/i/${img.slug}`}
-                    alt={img.fileName}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    unoptimized
-                  />
-                </div>
-                <div className="p-3 space-y-1">
-                  <p className="text-xs font-medium text-[#ccc] truncate">
-                    {img.fileName}
-                  </p>
-                  <p className="text-[11px] text-[#555]">
-                    {img.fileSizeMb} MB ·{" "}
-                    {new Date(img.createdAt?.toDate?.() || img.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
+            {recentUploads.map((img: any) => {
+              const isVideo = img.mimeType === 'video/mp4' || img.fileName?.toLowerCase().endsWith('.mp4');
+              const isAudio = img.mimeType?.startsWith('audio/') || ['.mp3', '.wav', '.ogg', '.m4a', '.aac'].some(ext => img.fileName?.toLowerCase().endsWith(ext));
+              const collectionName = isVideo ? 'videos' : isAudio ? 'audios' : 'images';
+
+              return (
+                <Link
+                  href={isAudio ? '/dashboard/audio' : isVideo ? '/dashboard/videos' : '/dashboard/images'}
+                  key={img.id}
+                  className="group bg-[#111] border border-white/[0.06] rounded-xl overflow-hidden hover:border-white/[0.15] transition-all block"
+                >
+                  <div className="aspect-square bg-[#0a0a0a] relative overflow-hidden flex items-center justify-center">
+                    {isAudio ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-[#121212] group-hover:bg-[#161616] transition-colors">
+                        <div className="w-12 h-12 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-inner group-hover:scale-110 transition-transform">
+                          <Music className="w-6 h-6" />
+                        </div>
+                      </div>
+                    ) : isVideo ? (
+                      <div className="relative w-full h-full">
+                        <video
+                          src={`/i/${img.slug}?thumbnail=true`}
+                          preload="metadata"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <div className="w-10 h-10 rounded-full bg-black/70 flex items-center justify-center text-white backdrop-blur-sm border border-white/20 shadow-lg">
+                            <Play className="w-4 h-4 ml-0.5 fill-current" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : img.mimeType === 'image/gif' || img.fileName?.toLowerCase().endsWith('.gif') ? (
+                      <video
+                        src={`/i/${img.slug}?thumbnail=true`}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/i/${img.slug}?thumbnail=true`}
+                        alt={img.fileName || 'Media'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
+                  </div>
+                  <div className="p-3 bg-[#0d0d0d] border-t border-white/[0.06] flex items-center justify-between">
+                    <p className="text-xs font-medium text-[#ccc] truncate group-hover:text-white transition-colors flex-1 pr-2" title={img.fileName}>
+                      {img.fileName ? img.fileName.replace(/\.[^/.]+$/, '') : ''}
+                    </p>
+                    <div className="flex items-center gap-2 text-[11px] text-[#555] shrink-0">
+                      <span className="flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <RealtimeViewCount
+                          docId={img.id}
+                          collectionName={collectionName}
+                          initialViews={img.views || 0}
+                        />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

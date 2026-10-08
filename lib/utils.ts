@@ -38,3 +38,9 @@ export function isValidImageFile(file: { type?: string; name?: string }): boolea
   const hasValidExt = ALLOWED_MEDIA_EXTENSIONS.some(ext => name.endsWith(ext))
   return isMediaMime || hasValidExt
 }
+
+export function formatNumber(num: number): string {
+  if (num === undefined || num === null) return '0'
+  if (num < 1000) return num.toString()
+  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(num)
+}

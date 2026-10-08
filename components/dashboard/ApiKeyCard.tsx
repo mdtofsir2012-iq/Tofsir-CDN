@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { clientDb } from '@/lib/firebase-admin'
+import { formatNumber } from '@/lib/utils'
 
 type Props = {
   id: string
   name: string
   apiKey: string
   usageCount: number
+  totalViews?: number
   createdAt: string
   type?: string
   defaultLang?: string
@@ -26,60 +30,101 @@ const LANGUAGE_LABELS: Record<string, string> = {
 
 const ALL_LANGS = ['curl', 'js', 'node', 'python', 'php', 'go', 'dart', 'csharp']
 
-export default function ApiKeyCard({ id, name, apiKey, usageCount, createdAt, type, defaultLang }: Props) {
-  const [visible, setVisible] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [copiedCode, setCopiedCode] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [showUsage, setShowUsage] = useState(false)
-  const [lang, setLang] = useState<string>(defaultLang || 'curl')
-
+export default function ApiKeyCard({
+  id,
+  name,
+  apiKey,
+  usageCount,
+  totalViews = 0,
+  createdAt,
+  type = 'all',
+  defaultLang = 'curl'
+}: Props) {
   const router = useRouter()
+  const [copiedKey, setCopiedKey] = useState(false)
+  const [copiedSnippet, setCopiedSnippet] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedLang, setSelectedLang] = useState(ALL_LANGS.includes(defaultLang) ? defaultLang : 'curl')
+  const [rtUsage, setRtUsage] = useState(usageCount)
+  const [rtViews, setRtViews] = useState(totalViews)
 
-  async function handleCopy() {
-    await navigator.clipboard.writeText(apiKey)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  useEffect(() => {
+    setRtUsage(usageCount)
+  }, [usageCount])
+
+  useEffect(() => {
+    setRtViews(totalViews)
+  }, [totalViews])
+
+  // Real-time listener for API key usage & views
+  useEffect(() => {
+    const unsub = onSnapshot(doc(clientDb, 'apiKeys', id), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data()
+        if (typeof data.usageCount === 'number') setRtUsage(data.usageCount)
+        if (typeof data.totalViews === 'number') setRtViews(data.totalViews)
+      }
+    })
+    return unsub
+  }, [id])
+
+  const handleCopyKey = () => {
+    navigator.clipboard.writeText(apiKey)
+    setCopiedKey(true)
+    setTimeout(() => setCopiedKey(false), 2000)
   }
 
-  async function handleCopyCode(code: string) {
-    await navigator.clipboard.writeText(code)
-    setCopiedCode(true)
-    setTimeout(() => setCopiedCode(false), 2000)
+  const handleCopySnippet = () => {
+    navigator.clipboard.writeText(snippet)
+    setCopiedSnippet(true)
+    setTimeout(() => setCopiedSnippet(false), 2000)
   }
 
-  async function handleDelete() {
-    if (!confirm(`Delete key "${name}"?`)) return
+  const handleDelete = async () => {
     setDeleting(true)
-    await fetch(`/api/keys/${id}`, { method: 'DELETE' })
-    router.refresh()
+    try {
+      const res = await fetch(`/api/keys/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      router.refresh()
+    } catch (e) {
+      console.error(e)
+      alert('Failed to delete API key')
+    } finally {
+      setDeleting(false)
+      setShowDeleteModal(false)
+    }
   }
 
-  const masked = apiKey.slice(0, 14) + '••••••••••••••••••••'
-  const origin = typeof window !== 'undefined' ? window.origin : 'https://yourdomain.com'
+  const getSnippet = (lang: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://img.tofsir.com'
+    const endpoint = `${origin}/api/v1/upload`
 
-  const sampleFile = type === 'image' ? 'photo.png' : type === 'video' ? 'video.mp4' : type === 'audio' ? 'audio.mp3' : 'file.png'
-
-  const snippets: Record<string, string> = {
-    curl: `curl -X POST "${origin}/api/v1/upload" \\\n  -H "x-api-key: ${apiKey}" \\\n  -F "image=@/path/to/${sampleFile}"`,
-
-    js: `async function uploadMedia(file) {\n  const form = new FormData();\n  form.append('image', file);\n  \n  try {\n    const res = await fetch('${origin}/api/v1/upload', {\n      method: 'POST',\n      headers: { 'x-api-key': '${apiKey}' },\n      body: form\n    });\n    const data = await res.json();\n    if (!res.ok) throw new Error(data.error || 'Upload failed');\n    return data;\n  } catch (err) {\n    console.error('Upload error:', err.message);\n  }\n}`,
-
-    node: `const axios = require('axios');\nconst FormData = require('form-data');\nconst fs = require('fs');\n\nasync function uploadFile(filePath) {\n  const form = new FormData();\n  form.append('image', fs.createReadStream(filePath));\n\n  try {\n    const response = await axios.post('${origin}/api/v1/upload', form, {\n      headers: {\n        'x-api-key': '${apiKey}',\n        ...form.getHeaders()\n      }\n    });\n    console.log('Success:', response.data);\n  } catch (error) {\n    console.error('Failed:', error.response?.data || error.message);\n  }\n}`,
-
-    python: `import requests\n\ndef upload_file(file_path):\n    url = "${origin}/api/v1/upload"\n    headers = {"x-api-key": "${apiKey}"}\n    \n    try:\n        with open(file_path, "rb") as f:\n            files = {"image": f}\n            response = requests.post(url, headers=headers, files=files)\n            response.raise_for_status()\n            return response.json()\n    except requests.exceptions.RequestException as e:\n        print(f"Error: {e}")`,
-
-    php: `<?php\n\$url = '${origin}/api/v1/upload';\n\$apiKey = '${apiKey}';\n\$filePath = '/path/to/${sampleFile}';\n\n\$curl = curl_init();\ncurl_setopt_array(\$curl, [\n    CURLOPT_URL => \$url,\n    CURLOPT_RETURNTRANSFER => true,\n    CURLOPT_POST => true,\n    CURLOPT_HTTPHEADER => ["x-api-key: \$apiKey"],\n    CURLOPT_POSTFIELDS => [\n        'image' => new CURLFile(\$filePath)\n    ]\n]);\n\n\$response = curl_exec(\$curl);\ncurl_close(\$curl);\necho \$response;\n?>`,
-
-    go: `package main\n\nimport (\n\t"bytes"\n\t"io"\n\t"mime/multipart"\n\t"net/http"\n\t"os"\n\t"path/filepath"\n)\n\nfunc uploadFile(filename string) ([]byte, error) {\n\tfile, err := os.Open(filename)\n\tif err != nil { return nil, err }\n\tdefer file.Close()\n\n\tbody := &bytes.Buffer{}\n\twriter := multipart.NewWriter(body)\n\tpart, _ := writer.CreateFormFile("image", filepath.Base(filename))\n\tio.Copy(part, file)\n\twriter.Close()\n\n\treq, _ := http.NewRequest("POST", "${origin}/api/v1/upload", body)\n\treq.Header.Set("x-api-key", "${apiKey}")\n\treq.Header.Set("Content-Type", writer.FormDataContentType())\n\n\tclient := &http.Client{}\n\tresp, _ := client.Do(req)\n\tdefer resp.Body.Close()\n\n\treturn io.ReadAll(resp.Body)\n}`,
-
-    dart: `import 'package:http/http.dart' as http;\nimport 'dart:io';\n\nFuture<void> uploadFile(File file) async {\n  var request = http.MultipartRequest('POST', Uri.parse('${origin}/api/v1/upload'));\n  request.headers['x-api-key'] = '${apiKey}';\n  request.files.add(await http.MultipartFile.fromPath('image', file.path));\n\n  var streamedResponse = await request.send();\n  var response = await http.Response.fromStream(streamedResponse);\n  \n  if (response.statusCode == 200) {\n    print('Success: \${response.body}');\n  } else {\n    print('Failed: \${response.body}');\n  }\n}`,
-
-    csharp: `using System.Net.Http;\n\nasync Task UploadFileAsync(string filePath)\n{\n    using var client = new HttpClient();\n    using var content = new MultipartFormDataContent();\n    using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);\n    \n    content.Add(new StreamContent(fileStream), "image", Path.GetFileName(filePath));\n    client.DefaultRequestHeaders.Add("x-api-key", "${apiKey}");\n\n    var response = await client.PostAsync("${origin}/api/v1/upload", content);\n    var result = await response.Content.ReadAsStringAsync();\n    Console.WriteLine(result);\n}`
+    switch (lang) {
+      case 'js':
+        return `const formData = new FormData();\nformData.append('image', fileInput.files[0]);\n\nconst res = await fetch('${endpoint}', {\n  method: 'POST',\n  headers: { 'x-api-key': '${apiKey}' },\n  body: formData\n});\nconst data = await res.json();\nconsole.log(data.url);`
+      case 'node':
+        return `import axios from 'axios';\nimport FormData from 'form-data';\nimport fs from 'fs';\n\nconst form = new FormData();\nform.append('image', fs.createReadStream('file.png'));\n\nconst res = await axios.post('${endpoint}', form, {\n  headers: { ...form.getHeaders(), 'x-api-key': '${apiKey}' }\n});\nconsole.log(res.data.url);`
+      case 'python':
+        return `import requests\n\nurl = '${endpoint}'\nfiles = {'image': open('file.png', 'rb')}\nheaders = {'x-api-key': '${apiKey}'}\n\nres = requests.post(url, files=files, headers=headers)\nprint(res.json()['url'])`
+      case 'php':
+        return `$ch = curl_init();\ncurl_setopt($ch, CURLOPT_URL, '${endpoint}');\ncurl_setopt($ch, CURLOPT_POST, true);\ncurl_setopt($ch, CURLOPT_POSTFIELDS, ['image' => new CURLFile('file.png')]);\ncurl_setopt($ch, CURLOPT_HTTPHEADER, ['x-api-key: ${apiKey}']);\ncurl_setopt($ch, CURLOPT_RETURNTRANSFER, true);\n$response = curl_exec($ch);\ncurl_close($ch);\necho $response;`
+      case 'go':
+        return `package main\n\nimport (\n\t"bytes"\n\t"io"\n\t"mime/multipart"\n\t"net/http"\n\t"os"\n)\n\nfunc main() {\n\tfile, _ := os.Open("file.png")\n\tdefer file.Close()\n\n\tbody := &bytes.Buffer{}\n\twriter := multipart.NewWriter(body)\n\tpart, _ := writer.CreateFormFile("image", "file.png")\n\tio.Copy(part, file)\n\twriter.Close()\n\n\treq, _ := http.NewRequest("POST", "${endpoint}", body)\n\treq.Header.Set("Content-Type", writer.FormDataContentType())\n\treq.Header.Set("x-api-key", "${apiKey}")\n\tresp, _ := http.DefaultClient.Do(req)\n\tdefer resp.Body.Close()\n}`
+      case 'dart':
+        return `import 'package:http/http.dart' as http;\n\nFuture<void> uploadFile() async {\n  var request = http.MultipartRequest('POST', Uri.parse('${endpoint}'))\n    ..headers['x-api-key'] = '${apiKey}'\n    ..files.add(await http.MultipartFile.fromPath('image', 'file.png'));\n  \n  var response = await request.send();\n  if (response.statusCode == 200) print('Uploaded!');\n}`
+      case 'csharp':
+        return `using var client = new HttpClient();\nusing var form = new MultipartFormDataContent();\nusing var fileStream = new FileStream("file.png", FileMode.Open);\nform.Add(new StreamContent(fileStream), "image", "file.png");\n\nclient.DefaultRequestHeaders.Add("x-api-key", "${apiKey}");\nvar response = await client.PostAsync("${endpoint}", form);\nvar result = await response.Content.ReadAsStringAsync();\nConsole.WriteLine(result);`
+      case 'curl':
+      default:
+        return `curl -X POST '${endpoint}' \\\n  -H 'x-api-key: ${apiKey}' \\\n  -F 'image=@/path/to/file.png'`
+    }
   }
+
+  const snippet = getSnippet(selectedLang)
 
   return (
-    <div className="bg-[#111] border border-white/[0.06] rounded-xl p-5 hover:border-white/[0.1] transition-colors space-y-4">
+    <div className="bg-[#111] border border-white/[0.08] rounded-xl p-5 space-y-4 hover:border-white/[0.15] transition-all">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -93,11 +138,16 @@ export default function ApiKeyCard({ id, name, apiKey, usageCount, createdAt, ty
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#555] bg-white/[0.04] border border-white/[0.06] px-2 py-1 rounded-md">
-            {usageCount.toLocaleString()} requests
+          <span className="text-xs text-[#555] bg-white/[0.04] border border-white/[0.06] px-2 py-1 rounded-md flex items-center gap-1" title="API Uploads">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+            {formatNumber(rtUsage)}
+          </span>
+          <span className="text-xs text-[#555] bg-white/[0.04] border border-white/[0.06] px-2 py-1 rounded-md flex items-center gap-1" title="Total Views">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+            {formatNumber(rtViews)}
           </span>
           <button
-            onClick={handleDelete}
+            onClick={() => setShowDeleteModal(true)}
             disabled={deleting}
             className="text-xs text-[#555] hover:text-red-400 transition-colors p-1"
           >
@@ -114,85 +164,86 @@ export default function ApiKeyCard({ id, name, apiKey, usageCount, createdAt, ty
         </div>
       </div>
 
-      {/* Key display */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 bg-[#0a0a0a] border border-white/[0.06] rounded-lg px-3 py-2.5 font-mono text-xs text-[#666] truncate">
-          {visible ? apiKey : masked}
-        </div>
+      <div className="flex items-center gap-2 bg-[#0A0A0A] border border-white/[0.06] rounded-lg px-3 py-2">
+        <code className="text-xs font-mono text-[#888] truncate flex-1 select-all">
+          {apiKey}
+        </code>
         <button
-          onClick={() => setVisible(!visible)}
-          className="p-2.5 bg-[#0a0a0a] border border-white/[0.06] rounded-lg text-[#555] hover:text-white hover:border-white/[0.1] transition-all"
-          title={visible ? 'Hide' : 'Show'}
+          onClick={handleCopyKey}
+          className="text-xs text-[#888] hover:text-white transition-colors flex items-center gap-1 shrink-0"
         >
-          {visible ? (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
+          {copiedKey ? (
+            <span className="text-green-400 flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Copied
+            </span>
           ) : (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-          )}
-        </button>
-        <button
-          onClick={handleCopy}
-          className="p-2.5 bg-[#0a0a0a] border border-white/[0.06] rounded-lg text-[#555] hover:text-white hover:border-white/[0.1] transition-all"
-          title="Copy"
-        >
-          {copied ? (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          ) : (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
+            <span className="flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Key
+            </span>
           )}
         </button>
       </div>
 
-      {/* Usage code dropdown section */}
-      <div className="pt-2 border-t border-white/[0.04]">
-        <button
-          onClick={() => setShowUsage(!showUsage)}
-          className="flex items-center justify-between w-full text-xs text-[#888] hover:text-white transition-colors py-1"
-        >
-          <span className="flex items-center gap-1.5 font-medium">
-            <span>💻</span> Advanced Usage Code Snippets ({type === 'image' ? 'Image' : type === 'video' ? 'Video' : type === 'audio' ? 'Audio' : 'Universal'})
-          </span>
-          <span className="text-[11px]">{showUsage ? '▲ Hide' : '▼ Show Code'}</span>
-        </button>
-
-        {showUsage && (
-          <div className="mt-3 space-y-3 bg-[#080808] border border-white/[0.06] rounded-lg p-3">
-            <div className="flex items-center justify-between gap-2">
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                className="bg-[#0a0a0a] border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-white/30 transition-colors flex-1 max-w-[220px]"
-              >
-                {ALL_LANGS.map((lKey) => (
-                  <option key={lKey} value={lKey}>
-                    {LANGUAGE_LABELS[lKey] || lKey}
-                  </option>
-                ))}
-              </select>
-
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-[#666]">SDK & API Snippet</span>
+          <div className="flex items-center gap-1 overflow-x-auto max-w-[280px] sm:max-w-none no-scrollbar">
+            {ALL_LANGS.map(lang => (
               <button
-                onClick={() => handleCopyCode(snippets[lang] || '')}
-                className="bg-white/10 hover:bg-white/20 text-white text-[11px] px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1 shrink-0"
+                key={lang}
+                onClick={() => setSelectedLang(lang)}
+                className={`text-[10px] px-2 py-0.5 rounded transition-colors whitespace-nowrap ${
+                  selectedLang === lang
+                    ? 'bg-white/10 text-white font-medium'
+                    : 'text-[#555] hover:text-[#888] bg-white/[0.02]'
+                }`}
               >
-                {copiedCode ? 'Copied Code! ✨' : 'Copy Code 📋'}
+                {LANGUAGE_LABELS[lang]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative bg-[#0A0A0A] border border-white/[0.06] rounded-lg p-3 group">
+          <pre className="text-[11px] font-mono text-[#aaa] overflow-x-auto max-h-[140px] leading-relaxed">
+            {snippet}
+          </pre>
+          <button
+            onClick={handleCopySnippet}
+            className="absolute top-2.5 right-2.5 text-[10px] text-[#666] hover:text-white bg-[#1a1a1a] border border-white/[0.08] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+          >
+            {copiedSnippet ? 'Copied!' : 'Copy Snippet'}
+          </button>
+        </div>
+      </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-base font-semibold text-white">Delete API Key?</h3>
+            <p className="text-xs text-[#888] leading-relaxed">
+              Are you sure you want to delete <span className="text-white font-medium">"{name}"</span>? Any applications using this key will immediately fail to upload.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-xs text-[#888] hover:text-white px-3 py-2 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                {deleting ? 'Deleting...' : 'Delete Key'}
               </button>
             </div>
-
-            <pre className="bg-[#040404] border border-white/[0.04] p-3 rounded-lg font-mono text-[11px] text-[#ccc] overflow-x-auto whitespace-pre">
-              {snippets[lang] || '// Select a language'}
-            </pre>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

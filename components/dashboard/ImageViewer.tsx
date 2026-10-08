@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Copy, Download, X, CheckCircle2 } from 'lucide-react'
 
@@ -16,6 +16,12 @@ type Props = {
 
 export default function ImageViewer({ isOpen, onClose, imageUrl, fileName, fileSizeMb, createdAt, slug }: Props) {
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    if (isOpen && slug) {
+      fetch(`/api/views/${slug}`, { method: 'POST' }).catch(console.error)
+    }
+  }, [isOpen, slug])
 
   if (!isOpen) return null
 

@@ -4,11 +4,12 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageViewer from './ImageViewer'
 import AudioPlayer from './AudioPlayer'
+import RealtimeViewCount from './RealtimeViewCount'
 import { toast } from 'sonner'
 import {
   FolderOpen, Music, Play, MoreVertical, Trash2,
   CheckSquare, Square, Maximize2, Copy, Download,
-  Check, X, ExternalLink, CheckCircle2
+  Check, X, CheckCircle2, Info
 } from 'lucide-react'
 
 type ImageItem = {
@@ -19,6 +20,7 @@ type ImageItem = {
   mimeType: string | null
   createdAt: string
   telegramMsgId: string | null
+  views?: number
 }
 
 export default function ImageGrid({ images }: { images: ImageItem[] }) {
@@ -27,15 +29,15 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
   const [copied, setCopied] = useState<string | null>(null)
   const [viewingImage, setViewingImage] = useState<ImageItem | null>(null)
   const [viewingAudio, setViewingAudio] = useState<ImageItem | null>(null)
+  const [viewingInfo, setViewingInfo] = useState<ImageItem | null>(null)
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([])
   const [bulkDeleting, setBulkDeleting] = useState(false)
-
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenu(null)
       }
     }
@@ -44,7 +46,6 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
   }, [])
 
   async function handleDelete(slug: string) {
-    if (!confirm('Delete this item?')) return
     setDeleting(slug)
     setActiveMenu(null)
     await fetch(`/api/images/${slug}`, { method: 'DELETE' })
@@ -156,7 +157,7 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
           return (
             <div
               key={img.id}
-              className={`group relative bg-[#111] border rounded-xl overflow-hidden flex flex-col transition-all ${
+              className={`group relative bg-[#111] border rounded-xl flex flex-col transition-all ${
                 isSelected ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-lg' : 'border-white/[0.08] hover:border-white/20'
               }`}
             >
@@ -182,9 +183,18 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
                   <MoreVertical className="w-4 h-4" />
                 </button>
 
-                {/* Dropdown Menu (Opened Downwards avoiding hidden overflow) */}
+                {/* Dropdown Menu */}
                 {activeMenu === img.slug && (
                   <div className="absolute right-0 top-10 w-48 bg-[#161616] border border-white/15 rounded-xl shadow-2xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+                    <button
+                      onClick={() => {
+                        setActiveMenu(null)
+                        setViewingInfo(img)
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-white hover:bg-white/5 flex items-center gap-2.5 transition-colors font-medium"
+                    >
+                      <Info className="w-4 h-4 text-blue-400" /> File Info
+                    </button>
                     <button
                       onClick={() => handleDelete(img.slug)}
                       disabled={deleting === img.slug}
@@ -248,7 +258,7 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
                     className="relative w-full h-full cursor-pointer"
                   >
                     <video
-                      src={`/i/${img.slug}`}
+                      src={`/i/${img.slug}?thumbnail=true`}
                       preload="metadata"
                       playsInline
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -261,45 +271,37 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
                   </div>
                 ) : img.mimeType === 'image/gif' || img.fileName?.toLowerCase().endsWith('.gif') ? (
                   <video
-                    src={`/i/${img.slug}`}
+                    src={`/i/${img.slug}?thumbnail=true`}
                     autoPlay
                     loop
                     muted
                     playsInline
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                    onClick={() => setViewingImage(img)}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                   />
                 ) : (
                   <img
-                    src={`/i/${img.slug}`}
+                    src={`/i/${img.slug}?thumbnail=true`}
                     alt={img.fileName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                    loading="lazy"
                     onClick={() => setViewingImage(img)}
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none'
-                    }}
+                    className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-300"
                   />
                 )}
               </div>
 
-              {/* Always visible footer */}
-              <div className="p-2.5 border-t border-white/[0.06] bg-[#0d0d0d] rounded-b-xl space-y-1">
+              {/* Footer */}
+              <div className="p-2.5 border-t border-white/[0.06] bg-[#0d0d0d] rounded-b-xl flex items-center justify-between">
                 <p
-                  className="text-xs text-[#ccc] truncate font-medium cursor-pointer hover:text-white"
-                  onClick={() => isAudio ? setViewingAudio(img) : !isVideo ? setViewingImage(img) : window.open(`/i/${img.slug}`, '_blank')}
-                  title="Click to open"
+                  className="text-xs text-white truncate font-medium cursor-pointer hover:text-blue-400 flex-1 pr-2"
+                  onClick={() => !isVideo && !isAudio && setViewingImage(img)}
+                  title={img.fileName}
                 >
-                  {img.fileName}
+                  {img.fileName ? img.fileName.replace(/\.[^/.]+$/, '') : ''}
                 </p>
-                <div className="flex items-center justify-between text-[10px] text-[#666]">
-                  <span>{img.fileSizeMb ? `${img.fileSizeMb} MB` : (isAudio ? 'Audio' : isVideo ? 'Video' : 'Image')}</span>
-                  <button
-                    onClick={() => handleCopy(img.slug)}
-                    className="text-blue-400 hover:text-blue-300 transition-colors font-mono"
-                  >
-                    {copied === img.slug ? 'Copied' : `/i/${img.slug}`}
-                  </button>
-                </div>
+                <span className="text-[11px] text-[#666] flex items-center gap-0.5 shrink-0" title="Views">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <RealtimeViewCount docId={img.id} collectionName="images" initialViews={img.views || 0} />
+                </span>
               </div>
             </div>
           )
@@ -310,7 +312,7 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
         <ImageViewer
           isOpen={!!viewingImage}
           onClose={() => setViewingImage(null)}
-          imageUrl={`/i/${viewingImage.slug}`}
+          imageUrl={`/i/${viewingImage.slug}?fromDashboard=true`}
           fileName={viewingImage.fileName}
           fileSizeMb={viewingImage.fileSizeMb || undefined}
           createdAt={viewingImage.createdAt}
@@ -322,12 +324,86 @@ export default function ImageGrid({ images }: { images: ImageItem[] }) {
         <AudioPlayer
           isOpen={!!viewingAudio}
           onClose={() => setViewingAudio(null)}
-          audioUrl={`/i/${viewingAudio.slug}`}
+          audioUrl={`/i/${viewingAudio.slug}?fromDashboard=true`}
           fileName={viewingAudio.fileName}
           fileSizeMb={viewingAudio.fileSizeMb || undefined}
           createdAt={viewingAudio.createdAt}
           slug={viewingAudio.slug}
         />
+      )}
+
+      {viewingInfo && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <Info className="w-5 h-5 text-blue-400" /> File Information
+              </h3>
+              <button
+                onClick={() => setViewingInfo(null)}
+                className="text-[#888] hover:text-white p-1 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="bg-[#0A0A0A] border border-white/[0.06] rounded-xl p-3 space-y-2">
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">File Name</span>
+                  <span className="text-white font-medium truncate max-w-[200px]" title={viewingInfo.fileName}>{viewingInfo.fileName}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">File Size</span>
+                  <span className="text-white font-medium">{viewingInfo.fileSizeMb ? `${viewingInfo.fileSizeMb} MB` : 'Unknown'}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">MIME Type</span>
+                  <span className="text-white font-medium">{viewingInfo.mimeType || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">Total Views</span>
+                  <span className="text-white font-medium">{viewingInfo.views || 0}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">Uploaded At</span>
+                  <span className="text-white font-medium">{new Date(viewingInfo.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-[#777]">Telegram Msg ID</span>
+                  <span className="text-white font-mono">{viewingInfo.telegramMsgId || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] text-[#777]">Direct URL</label>
+                <div className="flex items-center gap-2 bg-[#0A0A0A] border border-white/[0.06] rounded-lg px-3 py-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/i/${viewingInfo.slug}`}
+                    className="bg-transparent text-xs font-mono text-[#aaa] w-full outline-none select-all"
+                  />
+                  <button
+                    onClick={() => handleCopy(viewingInfo.slug)}
+                    className="text-xs text-blue-400 hover:text-blue-300 font-medium shrink-0 flex items-center gap-1"
+                  >
+                    <Copy className="w-3.5 h-3.5" /> Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setViewingInfo(null)}
+                className="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

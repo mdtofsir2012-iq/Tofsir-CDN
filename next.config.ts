@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     staleTimes:{
       dynamic:300,
       static:3600
+    },
+    serverActions: {
+      bodySizeLimit: '25mb'
     }
   },
   async headers() {

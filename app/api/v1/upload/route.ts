@@ -1,7 +1,8 @@
 import { adminDb } from '@/lib/firebase-admin'
-import { uploadImageToTelegram } from '@/lib/telegram'
-import { NextRequest, NextResponse } from 'next/server'
+import { uploadImageToTelegram, getTelegramFilePath } from '@/lib/telegram'
 import { nanoid } from 'nanoid'
+import { NextRequest, NextResponse } from 'next/server'
+import { increment } from 'firebase/firestore'
 import { corsHeaders, handleOptions } from './cors'
 import { isValidImageFile } from '@/lib/utils'
 
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     const rawKey = req.headers.get('x-api-key') || ''
     const apiKey = rawKey.trim().replace(/^["']|["']$/g, '')
+
     if (!apiKey) {
       return NextResponse.json({ error: 'Missing x-api-key header' }, { status: 401, headers: corsHeaders() })
     }
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const keyDoc = keysSnap.docs[0]
-    const keyRecord = { id: keyDoc.id, ...(keyDoc.data() as any) }
+    const keyRecord = keyDoc.data() as any
 
     const formData = await req.formData()
     const image = formData.get('image') as File
@@ -60,21 +62,29 @@ export async function POST(req: NextRequest) {
     }
 
     const { file_id, message_id } = await uploadImageToTelegram(image)
+    let telegramFilePath = ''
+    try {
+      telegramFilePath = await getTelegramFilePath(file_id, fileCategory)
+    } catch (e) {}
+
     const slug = nanoid(12)
     const createdAt = new Date()
 
-    const imageRef = adminDb.collection("images").doc()
+    const collectionName = isAudio ? 'audios' : isVideo ? 'videos' : 'images'
+    const imageRef = adminDb.collection(collectionName).doc()
     const imageData = {
       id: imageRef.id,
       userId: keyRecord.userId,
       apiKeyId: keyRecord.id,
       telegramFileId: file_id,
       telegramMsgId: String(message_id),
+      telegramFilePath,
       slug,
       fileName: image.name,
       fileSizeMb: parseFloat((image.size / 1024 / 1024).toFixed(2)),
       mimeType: image.type,
       createdAt,
+      views: 0
     }
 
     await imageRef.set(imageData)
@@ -84,6 +94,11 @@ export async function POST(req: NextRequest) {
       await keyDoc.ref.update({
         usageCount: currentCount + 1
       })
+
+      // Increment global stats
+      await adminDb.collection("stats").doc("admin").set({
+        totalUsage: increment(1)
+      }, { merge: true })
     } catch (e) {
       console.error('Failed to update usage count:', e)
     }

@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     name: name || 'New Key',
     type: type || 'all',
     usageCount: 0,
+    totalViews: 0,
     createdAt: new Date(),
   }
 

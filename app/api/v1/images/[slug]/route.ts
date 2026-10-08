@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb, findMediaBySlug } from '@/lib/firebase-admin'
 import { deleteImageFromTelegram } from '@/lib/telegram'
 import { NextRequest, NextResponse } from 'next/server'
 import { corsHeaders, handleOptions } from '../../upload/cors'
@@ -25,11 +25,15 @@ export async function DELETE(
   const keyDoc = keysSnap.docs[0]
   const apiKeyId = keyDoc.id
 
-  const imagesSnap = await adminDb.collection("images").where("slug", "==", slug).where("apiKeyId", "==", apiKeyId).limit(1).get()
-  if (imagesSnap.empty) return NextResponse.json({ error: 'Image not found' }, { status: 404, headers: corsHeaders() })
+  const mediaResult = await findMediaBySlug(slug)
+  if (!mediaResult) return NextResponse.json({ error: 'Media not found' }, { status: 404, headers: corsHeaders() })
 
-  const imageDoc = imagesSnap.docs[0]
+  const imageDoc = mediaResult.doc
   const image = imageDoc.data() as any
+
+  if (image.apiKeyId !== apiKeyId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403, headers: corsHeaders() })
+  }
 
   if (image.telegramMsgId) {
     try {

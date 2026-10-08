@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import VideoPlayer from './VideoPlayer'
+import RealtimeViewCount from './RealtimeViewCount'
 import { toast } from 'sonner'
 import {
   Film, Play, MoreVertical, Trash2,
   CheckSquare, Square, Maximize2, Copy, Download,
-  Check, X, CheckCircle2
+  Check, X, CheckCircle2, Info
 } from 'lucide-react'
 
 type VideoItem = {
@@ -18,6 +19,7 @@ type VideoItem = {
   mimeType: string | null
   createdAt: string
   telegramMsgId: string | null
+  views?: number
 }
 
 export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
@@ -25,15 +27,15 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [viewingVideo, setViewingVideo] = useState<VideoItem | null>(null)
+  const [viewingInfo, setViewingInfo] = useState<VideoItem | null>(null)
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([])
   const [bulkDeleting, setBulkDeleting] = useState(false)
-
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenu(null)
       }
     }
@@ -42,7 +44,6 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
   }, [])
 
   async function handleDelete(slug: string) {
-    if (!confirm('Delete this video?')) return
     setDeleting(slug)
     setActiveMenu(null)
     await fetch(`/api/images/${slug}`, { method: 'DELETE' })
@@ -91,7 +92,7 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
       setSelectedSlugs([])
       router.refresh()
     } catch (err: any) {
-      toast.error('Failed to delete some videos')
+      toast.error('Failed to delete some files')
     } finally {
       setBulkDeleting(false)
     }
@@ -180,6 +181,15 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
                 {activeMenu === vid.slug && (
                   <div className="absolute right-0 top-10 w-48 bg-[#161616] border border-white/15 rounded-xl shadow-2xl py-1.5 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
                     <button
+                      onClick={() => {
+                        setActiveMenu(null)
+                        setViewingInfo(vid)
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-white hover:bg-white/5 flex items-center gap-2.5 transition-colors font-medium"
+                    >
+                      <Info className="w-4 h-4 text-blue-400" /> File Info
+                    </button>
+                    <button
                       onClick={() => handleDelete(vid.slug)}
                       disabled={deleting === vid.slug}
                       className="w-full text-left px-4 py-2.5 text-red-400 hover:bg-white/5 flex items-center gap-2.5 transition-colors font-medium"
@@ -200,7 +210,7 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
                       }}
                       className="w-full text-left px-4 py-2.5 text-white hover:bg-white/5 flex items-center gap-2.5 transition-colors font-medium"
                     >
-                      <Maximize2 className="w-4 h-4" /> Play Full Screen
+                      <Play className="w-4 h-4" /> Play Video
                     </button>
                     <button
                       onClick={() => handleCopy(vid.slug)}
@@ -221,44 +231,37 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
                 )}
               </div>
 
-              {/* Cinematic 16:9 Aspect Video Container */}
+              {/* Video Thumbnail (16:9) */}
               <div
                 onClick={() => setViewingVideo(vid)}
-                className="relative aspect-video bg-black rounded-t-xl overflow-hidden flex items-center justify-center cursor-pointer group"
+                className="relative aspect-video bg-[#0a0a0a] rounded-t-xl overflow-hidden cursor-pointer group"
               >
                 <video
-                  src={`/i/${vid.slug}`}
+                  src={`/i/${vid.slug}?thumbnail=true`}
                   preload="metadata"
                   playsInline
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                 />
-
-                {/* Play Button Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-colors pointer-events-none">
-                  <div className="w-12 h-12 rounded-full bg-black/80 flex items-center justify-center text-white backdrop-blur-md border border-white/30 shadow-2xl group-hover:scale-110 transition-transform">
-                    <Play className="w-5 h-5 ml-1 fill-current" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-black/70 flex items-center justify-center text-white backdrop-blur-sm border border-white/20 shadow-lg group-hover:scale-110 transition-transform">
+                    <Play className="w-4 h-4 ml-0.5 fill-current" />
                   </div>
                 </div>
               </div>
 
-              {/* Always visible footer */}
-              <div className="p-3 border-t border-white/[0.06] bg-[#0d0d0d] rounded-b-xl space-y-1">
+              {/* Footer */}
+              <div className="p-3 border-t border-white/[0.06] bg-[#0d0d0d] rounded-b-xl flex items-center justify-between">
                 <p
-                  className="text-xs text-white truncate font-medium cursor-pointer hover:text-blue-400"
+                  className="text-xs text-white truncate font-medium cursor-pointer hover:text-blue-400 flex-1 pr-2"
                   onClick={() => setViewingVideo(vid)}
-                  title="Click to play"
+                  title={vid.fileName}
                 >
-                  {vid.fileName}
+                  {vid.fileName ? vid.fileName.replace(/\.[^/.]+$/, '') : ''}
                 </p>
-                <div className="flex items-center justify-between text-[10px] text-[#666]">
-                  <span>{vid.fileSizeMb ? `${vid.fileSizeMb} MB` : 'Video'}</span>
-                  <button
-                    onClick={() => handleCopy(vid.slug)}
-                    className="text-blue-400 hover:text-blue-300 transition-colors font-mono"
-                  >
-                    {copied === vid.slug ? 'Copied' : `/i/${vid.slug}`}
-                  </button>
-                </div>
+                <span className="text-[11px] text-[#666] flex items-center gap-0.5 shrink-0" title="Views">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <RealtimeViewCount docId={vid.id} collectionName="videos" initialViews={vid.views || 0} />
+                </span>
               </div>
             </div>
           )
@@ -269,12 +272,86 @@ export default function VideoGrid({ videos }: { videos: VideoItem[] }) {
         <VideoPlayer
           isOpen={!!viewingVideo}
           onClose={() => setViewingVideo(null)}
-          videoUrl={`/i/${viewingVideo.slug}`}
+          videoUrl={`/i/${viewingVideo.slug}?fromDashboard=true`}
           fileName={viewingVideo.fileName}
           fileSizeMb={viewingVideo.fileSizeMb || undefined}
           createdAt={viewingVideo.createdAt}
           slug={viewingVideo.slug}
         />
+      )}
+
+      {viewingInfo && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 max-w-md w-full space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                <Info className="w-5 h-5 text-blue-400" /> File Information
+              </h3>
+              <button
+                onClick={() => setViewingInfo(null)}
+                className="text-[#888] hover:text-white p-1 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="bg-[#0A0A0A] border border-white/[0.06] rounded-xl p-3 space-y-2">
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">File Name</span>
+                  <span className="text-white font-medium truncate max-w-[200px]" title={viewingInfo.fileName}>{viewingInfo.fileName}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">File Size</span>
+                  <span className="text-white font-medium">{viewingInfo.fileSizeMb ? `${viewingInfo.fileSizeMb} MB` : 'Unknown'}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">MIME Type</span>
+                  <span className="text-white font-medium">{viewingInfo.mimeType || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">Total Views</span>
+                  <span className="text-white font-medium">{viewingInfo.views || 0}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                  <span className="text-[#777]">Uploaded At</span>
+                  <span className="text-white font-medium">{new Date(viewingInfo.createdAt).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-[#777]">Telegram Msg ID</span>
+                  <span className="text-white font-mono">{viewingInfo.telegramMsgId || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] text-[#777]">Direct URL</label>
+                <div className="flex items-center gap-2 bg-[#0A0A0A] border border-white/[0.06] rounded-lg px-3 py-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/i/${viewingInfo.slug}`}
+                    className="bg-transparent text-xs font-mono text-[#aaa] w-full outline-none select-all"
+                  />
+                  <button
+                    onClick={() => handleCopy(viewingInfo.slug)}
+                    className="text-xs text-blue-400 hover:text-blue-300 font-medium shrink-0 flex items-center gap-1"
+                  >
+                    <Copy className="w-3.5 h-3.5" /> Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setViewingInfo(null)}
+                className="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

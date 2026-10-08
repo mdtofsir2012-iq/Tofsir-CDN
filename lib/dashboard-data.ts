@@ -12,16 +12,26 @@ export const getDashboardData = async (userId: string) => {
     return tB - tA
   })
 
-  const imagesSnap = await adminDb.collection("images").where("userId", "==", userId).get()
-  const images = imagesSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }))
-  images.sort((a, b) => {
+  const [imgSnap, vidSnap, audSnap] = await Promise.all([
+    adminDb.collection("images").where("userId", "==", userId).get(),
+    adminDb.collection("videos").where("userId", "==", userId).get(),
+    adminDb.collection("audios").where("userId", "==", userId).get(),
+  ])
+
+  const allMedia = [
+    ...imgSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })),
+    ...vidSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })),
+    ...audSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })),
+  ]
+
+  allMedia.sort((a, b) => {
     const tA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime()
     const tB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime()
     return tB - tA
   })
 
   let totalSizeMb = 0
-  images.forEach((img: any) => {
+  allMedia.forEach((img: any) => {
     if (typeof img.fileSizeMb === 'number') {
       totalSizeMb += img.fileSizeMb
     }
@@ -30,8 +40,8 @@ export const getDashboardData = async (userId: string) => {
   const user = userData ? {
     ...userData,
     apiKeys,
-    images: images.slice(0, 8),
-    _count: { images: images.length }
+    images: allMedia.slice(0, 8),
+    _count: { images: allMedia.length }
   } : null
 
   return { user, _sum: { fileSizeMb: totalSizeMb } }
@@ -48,6 +58,7 @@ export const getApiKeysData = async (userId: string) => {
       type: data.type || 'all',
       defaultLang: data.defaultLang || 'curl',
       usageCount: data.usageCount,
+      totalViews: data.totalViews,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toString() : String(data.createdAt),
       rawCreatedAt: data.createdAt?.toDate ? data.createdAt.toDate().getTime() : new Date(data.createdAt || 0).getTime()
     }
@@ -57,8 +68,8 @@ export const getApiKeysData = async (userId: string) => {
 }
 
 export const getImagesData = async (userId: string) => {
-  const imagesSnap = await adminDb.collection("images").where("userId", "==", userId).get()
-  const images = imagesSnap.docs.map(doc => {
+  const snap = await adminDb.collection("images").where("userId", "==", userId).get()
+  const items = snap.docs.map(doc => {
     const img = doc.data() as any
     return {
       id: doc.id,
@@ -66,11 +77,52 @@ export const getImagesData = async (userId: string) => {
       fileName: img.fileName,
       fileSizeMb: img.fileSizeMb,
       mimeType: img.mimeType,
+      views: img.views,
       createdAt: img.createdAt?.toDate ? img.createdAt.toDate().toString() : String(img.createdAt),
       rawCreatedAt: img.createdAt?.toDate ? img.createdAt.toDate().getTime() : new Date(img.createdAt || 0).getTime(),
       telegramMsgId: img.telegramMsgId != null ? String(img.telegramMsgId) : null,
     }
   })
-  images.sort((a, b) => b.rawCreatedAt - a.rawCreatedAt)
-  return images
+  items.sort((a, b) => b.rawCreatedAt - a.rawCreatedAt)
+  return items
+}
+
+export const getVideosData = async (userId: string) => {
+  const snap = await adminDb.collection("videos").where("userId", "==", userId).get()
+  const items = snap.docs.map(doc => {
+    const img = doc.data() as any
+    return {
+      id: doc.id,
+      slug: img.slug,
+      fileName: img.fileName,
+      fileSizeMb: img.fileSizeMb,
+      mimeType: img.mimeType,
+      views: img.views,
+      createdAt: img.createdAt?.toDate ? img.createdAt.toDate().toString() : String(img.createdAt),
+      rawCreatedAt: img.createdAt?.toDate ? img.createdAt.toDate().getTime() : new Date(img.createdAt || 0).getTime(),
+      telegramMsgId: img.telegramMsgId != null ? String(img.telegramMsgId) : null,
+    }
+  })
+  items.sort((a, b) => b.rawCreatedAt - a.rawCreatedAt)
+  return items
+}
+
+export const getAudiosData = async (userId: string) => {
+  const snap = await adminDb.collection("audios").where("userId", "==", userId).get()
+  const items = snap.docs.map(doc => {
+    const img = doc.data() as any
+    return {
+      id: doc.id,
+      slug: img.slug,
+      fileName: img.fileName,
+      fileSizeMb: img.fileSizeMb,
+      mimeType: img.mimeType,
+      views: img.views,
+      createdAt: img.createdAt?.toDate ? img.createdAt.toDate().toString() : String(img.createdAt),
+      rawCreatedAt: img.createdAt?.toDate ? img.createdAt.toDate().getTime() : new Date(img.createdAt || 0).getTime(),
+      telegramMsgId: img.telegramMsgId != null ? String(img.telegramMsgId) : null,
+    }
+  })
+  items.sort((a, b) => b.rawCreatedAt - a.rawCreatedAt)
+  return items
 }

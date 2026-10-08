@@ -1,6 +1,7 @@
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb, findMediaBySlug } from '@/lib/firebase-admin'
 import { getImageUrl } from '@/lib/telegram'
 import { NextRequest, NextResponse } from 'next/server'
+import { increment } from 'firebase/firestore'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,24 +13,53 @@ export async function GET(
     const { slug } = await params
     const { searchParams } = new URL(req.url)
     const isDownload = searchParams.get('download') === 'true'
+    const isPreview = searchParams.get('thumbnail') === 'true'
 
-    const imagesSnap = await adminDb.collection("images").where("slug", "==", slug).limit(1).get()
+    const mediaResult = await findMediaBySlug(slug)
 
-    if (imagesSnap.empty) {
-      return new NextResponse('Image not found', { status: 404, headers: { 'Content-Type': 'text/plain' } })
+    if (!mediaResult) {
+      return new NextResponse('Media not found', { status: 404, headers: { 'Content-Type': 'text/plain' } })
     }
 
-    const image = imagesSnap.docs[0].data() as any
+    const imageDoc = mediaResult.doc
+    const image = imageDoc.data() as any
 
-    // Get fresh download URL from Telegram using the correct bot token for this file type
-    const telegramUrl = await getImageUrl(image.telegramFileId, image.mimeType, image.fileName)
+    const isPartial = req.headers.has('range')
+    const isFromDashboard = searchParams.get('fromDashboard') === 'true'
+    const isVideoOrAudio = image.mimeType?.startsWith('video/') || image.mimeType?.startsWith('audio/') || image.fileName?.toLowerCase().match(/\.(mp4|mp3|wav|ogg|m4a|aac)$/)
 
-    // Fetch from Telegram and stream back
-    const res = await fetch(telegramUrl)
-    if (!res.ok) {
-      const errText = await res.text()
-      console.error('Failed to fetch image from Telegram:', errText)
-      return new NextResponse('Failed to fetch image from Telegram', { status: 502, headers: { 'Content-Type': 'text/plain' } })
+    if (!isPreview && !isPartial && !isFromDashboard && !isVideoOrAudio) {
+      // Increment view count on the media
+      imageDoc.ref.update({
+        views: increment(1)
+      }).catch(console.error)
+
+      // Increment global admin views stats
+      adminDb.collection("stats").doc("admin").set({
+        totalViews: increment(1)
+      }, { merge: true }).catch(console.error)
+
+      // Increment total views on the associated API Key
+      if (image.apiKeyId) {
+        adminDb.collection("apiKeys").doc(image.apiKeyId).update({
+          totalViews: increment(1)
+        }).catch(console.error)
+      }
+    }
+
+    const telegramUrl = await getImageUrl(image.telegramFileId, image.mimeType, image.fileName, imageDoc.ref, image.telegramFilePath)
+
+    const fetchHeaders: Record<string, string> = {}
+    const rangeHeader = req.headers.get('range')
+    if (rangeHeader) {
+      fetchHeaders['Range'] = rangeHeader
+    }
+
+    const res = await fetch(telegramUrl, { headers: fetchHeaders })
+    if (!res.ok && res.status !== 206) {
+      const errText = await res.text().catch(() => '')
+      console.error('Failed to fetch media from Telegram:', res.status, errText)
+      return new NextResponse('Failed to fetch media from Telegram', { status: 502, headers: { 'Content-Type': 'text/plain' } })
     }
 
     const dispositionType = isDownload ? 'attachment' : 'inline'
@@ -38,17 +68,28 @@ export async function GET(
       contentType = 'video/mp4'
     }
 
+    const sanitizedFileName = encodeURIComponent(image.fileName || 'file')
+
+    const responseHeaders: Record<string, string> = {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Content-Disposition': `${dispositionType}; filename*=UTF-8''${sanitizedFileName}`,
+      'Accept-Ranges': 'bytes',
+    }
+
+    if (res.headers.get('content-length')) {
+      responseHeaders['Content-Length'] = res.headers.get('content-length')!
+    }
+    if (res.headers.get('content-range')) {
+      responseHeaders['Content-Range'] = res.headers.get('content-range')!
+    }
+
     return new NextResponse(res.body, {
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-        'Content-Disposition': `${dispositionType}; filename="${image.fileName}"`,
-        ...(res.headers.get('content-length') ? { 'Content-Length': res.headers.get('content-length')! } : {}),
-        'Accept-Ranges': 'bytes',
-      },
+      status: res.status,
+      headers: responseHeaders,
     })
   } catch (error: any) {
-    console.error('Error serving image:', error)
+    console.error('Error serving media:', error)
     return new NextResponse(error.message || 'Internal server error', { status: 500, headers: { 'Content-Type': 'text/plain' } })
   }
 }
