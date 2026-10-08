@@ -510,6 +510,27 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* VIDEO SHOWCASE SECTION */}
+      <section className="max-w-[1200px] mx-auto px-6 py-[80px] border-t border-[#E5E5E5]/10">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl tracking-tight mb-4 text-[#E5E5E5]">
+            See Tofsir CDN in Action
+          </h2>
+          <p className="text-[#E5E5E5]/60 text-lg max-w-xl mx-auto leading-[1.8]">
+            Watch how easy it is to set up and manage your media storage & CDN.
+          </p>
+        </div>
+        <div className="max-w-4xl mx-auto border border-[#E5E5E5]/10 rounded-2xl overflow-hidden bg-[#0A0A0A] shadow-2xl aspect-video relative">
+          <iframe
+            src="https://www.youtube.com/embed/iEWedXECDDk"
+            title="Tofsir CDN Demo Video"
+            className="w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          ></iframe>
+        </div>
+      </section>
+
       {/* 3. HOW IT WORKS */}
       <section className="max-w-[1200px] mx-auto px-6 py-[100px] border-t border-[#E5E5E5]/10">
         <div className="mb-16">
