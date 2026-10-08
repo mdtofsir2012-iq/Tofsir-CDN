@@ -63,43 +63,48 @@ const HighlightedJSON = () => (
 
 const HighlightedJS = () => (
   <span>
-    <span className="text-[#2563EB]">const</span> uploadMedia ={" "}
-    <span className="text-[#2563EB]">async</span> (file) ={">"} {"{"}
+    <span className="text-[#2563EB]">const</span> formData = <span className="text-[#2563EB]">new</span> FormData();
     <br />
-    {"  "}
-    <span className="text-[#2563EB]">const</span> formData ={" "}
-    <span className="text-[#2563EB]">new</span> FormData();
-    <br />
-    {"  "}formData.append(<span className="text-[#E5E5E5]/90">'image'</span>,
-    file);
+    formData.append(<span className="text-[#E5E5E5]/90">'image'</span>, fileInput.files[0]);
     <br />
     <br />
-    {"  "}
-    <span className="text-[#2563EB]">const</span> res ={" "}
-    <span className="text-[#2563EB]">await</span> fetch(
-    <span className="text-[#E5E5E5]/90">
-      'https://tofsir-cdn.vercel.app/api/v1/upload'
-    </span>
-    , {"{"}
+    <span className="text-[#2563EB]">const</span> res = <span className="text-[#2563EB]">await</span> fetch(<span className="text-[#E5E5E5]/90">'https://tofsir-cdn.vercel.app/api/v1/upload'</span>, {"{"}
     <br />
-    {"    "}method: <span className="text-[#E5E5E5]/90">'POST'</span>,<br />
-    {"    "}headers: {"{"}
+    {"  "}method: <span className="text-[#E5E5E5]/90">'POST'</span>,
     <br />
-    {"      "}
-    <span className="text-[#E5E5E5]/90">'x-api-key'</span>:{" "}
-    <span className="text-[#E5E5E5]/90">'your_api_key'</span>
+    {"  "}headers: {"{"} <span className="text-[#E5E5E5]/90">'x-api-key'</span>: <span className="text-[#E5E5E5]/90">'your_api_key'</span> {"}"},
     <br />
-    {"    }"},<br />
-    {"    "}body: formData
+    {"  "}body: formData
     <br />
-    {"  }"});
+    {"}"});
+    <br />
+    <span className="text-[#2563EB]">const</span> data = <span className="text-[#2563EB]">await</span> res.json();
+    <br />
+    console.log(data.url);
+  </span>
+);
+
+const HighlightedNode = () => (
+  <span>
+    <span className="text-[#2563EB]">import</span> axios <span className="text-[#2563EB]">from</span> <span className="text-[#E5E5E5]/90">'axios'</span>;
+    <br />
+    <span className="text-[#2563EB]">import</span> FormData <span className="text-[#2563EB]">from</span> <span className="text-[#E5E5E5]/90">'form-data'</span>;
+    <br />
+    <span className="text-[#2563EB]">import</span> fs <span className="text-[#2563EB]">from</span> <span className="text-[#E5E5E5]/90">'fs'</span>;
     <br />
     <br />
-    {"  "}
-    <span className="text-[#2563EB]">return</span>{" "}
-    <span className="text-[#2563EB]">await</span> res.json();
+    <span className="text-[#2563EB]">const</span> form = <span className="text-[#2563EB]">new</span> FormData();
     <br />
-    {"}"}
+    form.append(<span className="text-[#E5E5E5]/90">'image'</span>, fs.createReadStream(<span className="text-[#E5E5E5]/90">'media.mp4'</span>));
+    <br />
+    <br />
+    <span className="text-[#2563EB]">const</span> res = <span className="text-[#2563EB]">await</span> axios.post(<span className="text-[#E5E5E5]/90">'https://tofsir-cdn.vercel.app/api/v1/upload'</span>, form, {"{"}
+    <br />
+    {"  "}headers: {"{"} ...form.getHeaders(), <span className="text-[#E5E5E5]/90">'x-api-key'</span>: <span className="text-[#E5E5E5]/90">'your_api_key'</span> {"}"}
+    <br />
+    {"}"});
+    <br />
+    console.log(res.data.url);
   </span>
 );
 
@@ -108,51 +113,98 @@ const HighlightedPython = () => (
     <span className="text-[#2563EB]">import</span> requests
     <br />
     <br />
-    <span className="text-[#2563EB]">def</span> upload_media(file_path):
+    url = <span className="text-[#E5E5E5]/90">'https://tofsir-cdn.vercel.app/api/v1/upload'</span>
     <br />
-    {"    "}
-    <span className="text-[#2563EB]">with</span> open(file_path,{" "}
-    <span className="text-[#E5E5E5]/90">'rb'</span>){" "}
-    <span className="text-[#2563EB]">as</span> f:
+    files = {"{"}<span className="text-[#E5E5E5]/90">'image'</span>: open(<span className="text-[#E5E5E5]/90">'media.mp4'</span>, <span className="text-[#E5E5E5]/90">'rb'</span>){"}"}
     <br />
-    {"        "}files = {"{"}
-    <span className="text-[#E5E5E5]/90">'image'</span>: f{"}"}
-    <br />
-    {"        "}headers = {"{"}
-    <span className="text-[#E5E5E5]/90">'x-api-key'</span>:{" "}
-    <span className="text-[#E5E5E5]/90">'your_api_key'</span>
-    {"}"}
+    headers = {"{"}<span className="text-[#E5E5E5]/90">'x-api-key'</span>: <span className="text-[#E5E5E5]/90">'your_api_key'</span>{"}"}
     <br />
     <br />
-    {"        "}res = requests.post(
+    res = requests.post(url, files=files, headers=headers)
     <br />
-    {"            "}
-    <span className="text-[#E5E5E5]/90">
-      'https://tofsir-cdn.vercel.app/api/v1/upload'
-    </span>
-    ,<br />
-    {"            "}headers=headers,
-    <br />
-    {"            "}files=files
-    <br />
-    {"        "})<br />
-    <br />
-    {"        "}
-    <span className="text-[#2563EB]">return</span> res.json()
+    print(res.json()[<span className="text-[#E5E5E5]/90">'url'</span>])
   </span>
 );
 
 const HighlightedCurl = () => (
   <span>
-    curl -X <span className="text-[#2563EB]">POST</span>{" "}
-    <span className="text-[#E5E5E5]/90">
-      https://tofsir-cdn.vercel.app/api/v1/upload
-    </span>{" "}
-    \ <br />
-    {"  "}-H{" "}
-    <span className="text-[#E5E5E5]/90">"x-api-key: your_api_key"</span>{" "}
-    \ <br />
+    curl -X <span className="text-[#2563EB]">POST</span> <span className="text-[#E5E5E5]/90">https://tofsir-cdn.vercel.app/api/v1/upload</span> \<br />
+    {"  "}-H <span className="text-[#E5E5E5]/90">"x-api-key: your_api_key"</span> \<br />
     {"  "}-F <span className="text-[#E5E5E5]/90">"image=@media.mp4"</span>
+  </span>
+);
+
+const HighlightedPhp = () => (
+  <span>
+    $ch = curl_init();<br />
+    curl_setopt($ch, CURLOPT_URL, <span className="text-[#E5E5E5]/90">'https://tofsir-cdn.vercel.app/api/v1/upload'</span>);<br />
+    curl_setopt($ch, CURLOPT_POST, <span className="text-[#2563EB]">true</span>);<br />
+    curl_setopt($ch, CURLOPT_POSTFIELDS, [<span className="text-[#E5E5E5]/90">'image'</span> =&gt; <span className="text-[#2563EB]">new</span> CURLFile(<span className="text-[#E5E5E5]/90">'media.mp4'</span>)]);<br />
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [<span className="text-[#E5E5E5]/90">'x-api-key: your_api_key'</span>]);<br />
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, <span className="text-[#2563EB]">true</span>);<br />
+    $response = curl_exec($ch);<br />
+    curl_close($ch);<br />
+    echo $response;
+  </span>
+);
+
+const HighlightedGo = () => (
+  <span>
+    <span className="text-[#2563EB]">package</span> main<br />
+    <br />
+    <span className="text-[#2563EB]">import</span> (<br />
+    {"\t"}<span className="text-[#E5E5E5]/90">"bytes"</span><br />
+    {"\t"}<span className="text-[#E5E5E5]/90">"io"</span><br />
+    {"\t"}<span className="text-[#E5E5E5]/90">"mime/multipart"</span><br />
+    {"\t"}<span className="text-[#E5E5E5]/90">"net/http"</span><br />
+    {"\t"}<span className="text-[#E5E5E5]/90">"os"</span><br />
+    )<br />
+    <br />
+    <span className="text-[#2563EB]">func</span> main() &#123;<br />
+    {"\t"}file, _ := os.Open(<span className="text-[#E5E5E5]/90">"media.mp4"</span>)<br />
+    {"\t"}<span className="text-[#2563EB]">defer</span> file.Close()<br />
+    <br />
+    {"\t"}body := &bytes.Buffer&#123;&#125;<br />
+    {"\t"}writer := multipart.NewWriter(body)<br />
+    {"\t"}part, _ := writer.CreateFormFile(<span className="text-[#E5E5E5]/90">"image"</span>, <span className="text-[#E5E5E5]/90">"media.mp4"</span>)<br />
+    {"\t"}io.Copy(part, file)<br />
+    {"\t"}writer.Close()<br />
+    <br />
+    {"\t"}req, _ := http.NewRequest(<span className="text-[#E5E5E5]/90">"POST"</span>, <span className="text-[#E5E5E5]/90">"https://tofsir-cdn.vercel.app/api/v1/upload"</span>, body)<br />
+    {"\t"}req.Header.Set(<span className="text-[#E5E5E5]/90">"Content-Type"</span>, writer.FormDataContentType())<br />
+    {"\t"}req.Header.Set(<span className="text-[#E5E5E5]/90">"x-api-key"</span>, <span className="text-[#E5E5E5]/90">"your_api_key"</span>)<br />
+    {"\t"}resp, _ := http.DefaultClient.Do(req)<br />
+    {"\t"}<span className="text-[#2563EB]">defer</span> resp.Body.Close()<br />
+    &#125;
+  </span>
+);
+
+const HighlightedDart = () => (
+  <span>
+    <span className="text-[#2563EB]">import</span> <span className="text-[#E5E5E5]/90">'package:http/http.dart'</span> <span className="text-[#2563EB]">as</span> http;<br />
+    <br />
+    Future&lt;<span className="text-[#2563EB]">void</span>&gt; uploadFile() <span className="text-[#2563EB]">async</span> &#123;<br />
+    {"\t"}<span className="text-[#2563EB]">var</span> request = http.MultipartRequest(<span className="text-[#E5E5E5]/90">'POST'</span>, Uri.parse(<span className="text-[#E5E5E5]/90">'https://tofsir-cdn.vercel.app/api/v1/upload'</span>))<br />
+    {"\t\t"}&#46;&#46;headers[<span className="text-[#E5E5E5]/90">'x-api-key'</span>] = <span className="text-[#E5E5E5]/90">'your_api_key'</span><br />
+    {"\t\t"}&#46;&#46;files.add(<span className="text-[#2563EB]">await</span> http.MultipartFile.fromPath(<span className="text-[#E5E5E5]/90">'image'</span>, <span className="text-[#E5E5E5]/90">'media.mp4'</span>));<br />
+    <br />
+    {"\t"}<span className="text-[#2563EB]">var</span> response = <span className="text-[#2563EB]">await</span> request.send();<br />
+    {"\t"}<span className="text-[#2563EB]">if</span> (response.statusCode == <span className="text-[#2563EB]">200</span>) print(<span className="text-[#E5E5E5]/90">'Uploaded!'</span>);<br />
+    &#125;
+  </span>
+);
+
+const HighlightedCSharp = () => (
+  <span>
+    <span className="text-[#2563EB]">using var</span> client = <span className="text-[#2563EB]">new</span> HttpClient();<br />
+    <span className="text-[#2563EB]">using var</span> form = <span className="text-[#2563EB]">new</span> MultipartFormDataContent();<br />
+    <span className="text-[#2563EB]">using var</span> fileStream = <span className="text-[#2563EB]">new</span> FileStream(<span className="text-[#E5E5E5]/90">"media.mp4"</span>, FileMode.Open);<br />
+    form.Add(<span className="text-[#2563EB]">new</span> StreamContent(fileStream), <span className="text-[#E5E5E5]/90">"image"</span>, <span className="text-[#E5E5E5]/90">"media.mp4"</span>);<br />
+    <br />
+    client.DefaultRequestHeaders.Add(<span className="text-[#E5E5E5]/90">"x-api-key"</span>, <span className="text-[#E5E5E5]/90">"your_api_key"</span>);<br />
+    <span className="text-[#2563EB]">var</span> response = <span className="text-[#2563EB]">await</span> client.PostAsync(<span className="text-[#E5E5E5]/90">"https://tofsir-cdn.vercel.app/api/v1/upload"</span>, form);<br />
+    <span className="text-[#2563EB]">var</span> result = <span className="text-[#2563EB]">await</span> response.Content.ReadAsStringAsync();<br />
+    Console.WriteLine(result);
   </span>
 );
 
@@ -520,17 +572,22 @@ export default function LandingPage() {
               Developer first
             </h2>
             <p className="text-[#E5E5E5]/60 text-lg leading-[1.8]">
-              Integrate in minutes using standard HTTP clients.
+              Integrate in minutes using standard HTTP clients across 8+ programming languages.
             </p>
           </div>
 
           <div className="border border-[#E5E5E5]/10 rounded-lg bg-[#0A0A0A] overflow-hidden flex flex-col md:flex-row">
             {/* Tabs */}
-            <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-[#E5E5E5]/10 bg-[#161616] p-2 flex flex-row md:flex-col gap-1 overflow-x-auto">
+            <div className="w-full md:w-52 border-b md:border-b-0 md:border-r border-[#E5E5E5]/10 bg-[#161616] p-2 flex flex-row md:flex-col gap-1 overflow-x-auto">
               {[
-                { id: "javascript", label: "Node.js / JS" },
-                { id: "python", label: "Python" },
+                { id: "javascript", label: "JavaScript (Fetch)" },
+                { id: "node", label: "Node.js (Axios)" },
+                { id: "python", label: "Python (Requests)" },
                 { id: "curl", label: "cURL" },
+                { id: "php", label: "PHP (cURL)" },
+                { id: "go", label: "Go" },
+                { id: "dart", label: "Dart / Flutter" },
+                { id: "csharp", label: "C# (.NET)" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -550,8 +607,13 @@ export default function LandingPage() {
             <div className="flex-1 p-6 overflow-x-auto">
               <pre className="text-sm mono-font text-[#E5E5E5] leading-[1.6]">
                 {activeTab === "javascript" && <HighlightedJS />}
+                {activeTab === "node" && <HighlightedNode />}
                 {activeTab === "python" && <HighlightedPython />}
                 {activeTab === "curl" && <HighlightedCurl />}
+                {activeTab === "php" && <HighlightedPhp />}
+                {activeTab === "go" && <HighlightedGo />}
+                {activeTab === "dart" && <HighlightedDart />}
+                {activeTab === "csharp" && <HighlightedCSharp />}
               </pre>
             </div>
           </div>
