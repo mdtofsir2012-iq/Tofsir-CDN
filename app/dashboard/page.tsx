@@ -180,7 +180,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {stats.map((stat, i) => (
           <div
             key={i}
@@ -239,7 +239,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {recentUploads.map((img: any) => {
               const isVideo = img.mimeType === 'video/mp4' || img.fileName?.toLowerCase().endsWith('.mp4');
               const isAudio = img.mimeType?.startsWith('audio/') || ['.mp3', '.wav', '.ogg', '.m4a', '.aac'].some(ext => img.fileName?.toLowerCase().endsWith(ext));

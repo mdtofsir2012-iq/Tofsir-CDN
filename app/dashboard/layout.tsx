@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import Loading from "./loading";
 import { NavLink } from "@/components/dashboard/NavLink";
+import MobileNav from "@/components/dashboard/MobileNav";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -27,8 +28,11 @@ export default async function DashboardLayout({
 
   return (
     <div className={`min-h-screen bg-[#0a0a0a] text-[#ededed] font-sans ${inter.variable}`}>
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-56 bg-[#111111] border-r border-white/[0.06] flex flex-col">
+      {/* Mobile Navigation Header & Bottom Nav */}
+      <MobileNav session={session} />
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex fixed left-0 top-0 h-full w-56 bg-[#111111] border-r border-white/[0.06] flex-col">
 
         {/* Logo */}
         <div className="p-5 border-b border-white/[0.06]">
@@ -43,89 +47,89 @@ export default async function DashboardLayout({
         </div>
 
         {/* Nav */}
-    <nav className="flex-1 p-3 space-y-0.5">
-  {[
-    {
-      href: "/dashboard",
-      label: "Overview",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/images",
-      label: "Images",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/videos",
-      label: "Videos",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/audio",
-      label: "Audio",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/api-keys",
-      label: "API Keys",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/api-tester",
-      label: "API Key Tester",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/telegram",
-      label: "Telegram ID",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
-        </svg>
-      ),
-    },
-    {
-      href: "/dashboard/docs",
-      label: "Docs",
-      icon: (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-        </svg>
-      ),
-    },
-  ].map((item) => (
-    <NavLink          // ✅ was <Link>
-      key={item.href}
-      href={item.href}
-      label={item.label}
-      icon={item.icon}
-    />
-  ))}
-</nav>
+        <nav className="flex-1 p-3 space-y-0.5">
+          {[
+            {
+              href: "/dashboard",
+              label: "Overview",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/images",
+              label: "Images",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/videos",
+              label: "Videos",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/audio",
+              label: "Audio",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/api-keys",
+              label: "API Keys",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/api-tester",
+              label: "API Key Tester",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/telegram",
+              label: "Telegram ID",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                </svg>
+              ),
+            },
+            {
+              href: "/dashboard/docs",
+              label: "Docs",
+              icon: (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+              ),
+            },
+          ].map((item) => (
+            <NavLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={item.icon}
+            />
+          ))}
+        </nav>
         {/* Footer */}
         <div className="p-3 border-t border-white/[0.06] space-y-2">
           <div className="flex gap-2 px-3">
@@ -151,8 +155,8 @@ export default async function DashboardLayout({
       </aside>
 
       {/* Main */}
-      <main className="ml-56 min-h-screen">
-        <div className="max-w-5xl mx-auto px-8 py-8">
+      <main className="md:ml-56 min-h-screen pb-24 md:pb-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
           <Suspense fallback={<Loading/>}>
           {children}
           </Suspense>
