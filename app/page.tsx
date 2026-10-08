@@ -210,7 +210,6 @@ const HighlightedCSharp = () => (
 
 export default function LandingPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("javascript");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
   const [isScrolled, setIsScrolled] = useState(false);
@@ -561,7 +560,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. CODE EXAMPLES */}
+      {/* 4. CODE EXAMPLES (VERTICAL SERIAL LIST) */}
       <section
         id="docs"
         className="bg-[#111111] border-y border-[#E5E5E5]/10 py-[100px]"
@@ -576,46 +575,31 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="border border-[#E5E5E5]/10 rounded-lg bg-[#0A0A0A] overflow-hidden flex flex-col md:flex-row">
-            {/* Tabs */}
-            <div className="w-full md:w-52 border-b md:border-b-0 md:border-r border-[#E5E5E5]/10 bg-[#161616] p-2 flex flex-row md:flex-col gap-1 overflow-x-auto">
-              {[
-                { id: "javascript", label: "JavaScript (Fetch)" },
-                { id: "node", label: "Node.js (Axios)" },
-                { id: "python", label: "Python (Requests)" },
-                { id: "curl", label: "cURL" },
-                { id: "php", label: "PHP (cURL)" },
-                { id: "go", label: "Go" },
-                { id: "dart", label: "Dart / Flutter" },
-                { id: "csharp", label: "C# (.NET)" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-3 text-sm text-left rounded whitespace-nowrap transition-colors duration-200 ${
-                    activeTab === tab.id
-                      ? "bg-[#2563EB]/10 text-[#2563EB] font-medium"
-                      : "text-[#E5E5E5]/60 hover:text-[#E5E5E5] hover:bg-[#E5E5E5]/5"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Code Display */}
-            <div className="flex-1 p-6 overflow-x-auto">
-              <pre className="text-sm mono-font text-[#E5E5E5] leading-[1.6]">
-                {activeTab === "javascript" && <HighlightedJS />}
-                {activeTab === "node" && <HighlightedNode />}
-                {activeTab === "python" && <HighlightedPython />}
-                {activeTab === "curl" && <HighlightedCurl />}
-                {activeTab === "php" && <HighlightedPhp />}
-                {activeTab === "go" && <HighlightedGo />}
-                {activeTab === "dart" && <HighlightedDart />}
-                {activeTab === "csharp" && <HighlightedCSharp />}
-              </pre>
-            </div>
+          <div className="space-y-6">
+            {[
+              { label: "JavaScript (Fetch)", component: <HighlightedJS /> },
+              { label: "Node.js (Axios)", component: <HighlightedNode /> },
+              { label: "Python (Requests)", component: <HighlightedPython /> },
+              { label: "cURL", component: <HighlightedCurl /> },
+              { label: "PHP (cURL)", component: <HighlightedPhp /> },
+              { label: "Go", component: <HighlightedGo /> },
+              { label: "Dart / Flutter", component: <HighlightedDart /> },
+              { label: "C# (.NET)", component: <HighlightedCSharp /> },
+            ].map((item, index) => (
+              <div key={index} className="border border-[#E5E5E5]/10 rounded-lg bg-[#0A0A0A] overflow-hidden">
+                <div className="border-b border-[#E5E5E5]/10 px-6 py-3.5 bg-[#161616] flex items-center justify-between">
+                  <span className="text-sm font-semibold text-[#E5E5E5] mono-font flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span>
+                    {item.label}
+                  </span>
+                </div>
+                <div className="p-6 overflow-x-auto">
+                  <pre className="text-sm mono-font text-[#E5E5E5] leading-[1.6]">
+                    {item.component}
+                  </pre>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
