@@ -14,7 +14,7 @@ const HighlightedHeroCode = () => (
   <span>
     curl -X <span className="text-[#2563EB]">POST</span>{" "}
     <span className="text-[#E5E5E5]/90">
-      https://imgstorage1.vercel.app/api/v1/upload
+      https://tofsir-cdn.vercel.app/api/v1/upload
     </span>{" "}
     \ <br />
     {"  "}-H{" "}
@@ -31,7 +31,7 @@ const HighlightedHeroCode = () => (
     <span className="text-[#2563EB]">true</span>,<br />
     <span className="text-[#E5E5E5]/60"> "url"</span>:{" "}
     <span className="text-[#E5E5E5]/90">
-      "https://imgstorage1.vercel.app/i/abc123"
+      "https://tofsir-cdn.vercel.app/i/abc123"
     </span>
     ,<br />
     <span className="text-[#E5E5E5]/60"> "id"</span>:{" "}
@@ -51,7 +51,7 @@ const HighlightedJSON = () => (
     <span className="text-[#2563EB]">true</span>,<br />
     <span className="text-[#E5E5E5]/60"> "url"</span>:{" "}
     <span className="text-[#E5E5E5]/90">
-      "https://imgstorage1.vercel.app/i/abc123"
+      "https://tofsir-cdn.vercel.app/i/abc123"
     </span>
     ,<br />
     <span className="text-[#E5E5E5]/60"> "id"</span>:{" "}
@@ -78,7 +78,7 @@ const HighlightedJS = () => (
     <span className="text-[#2563EB]">const</span> res ={" "}
     <span className="text-[#2563EB]">await</span> fetch(
     <span className="text-[#E5E5E5]/90">
-      'https://imgstorage1.vercel.app/api/v1/upload'
+      'https://tofsir-cdn.vercel.app/api/v1/upload'
     </span>
     , {"{"}
     <br />
@@ -128,7 +128,7 @@ const HighlightedPython = () => (
     <br />
     {"            "}
     <span className="text-[#E5E5E5]/90">
-      'https://imgstorage1.vercel.app/api/v1/upload'
+      'https://tofsir-cdn.vercel.app/api/v1/upload'
     </span>
     ,<br />
     {"            "}headers=headers,
@@ -146,7 +146,7 @@ const HighlightedCurl = () => (
   <span>
     curl -X <span className="text-[#2563EB]">POST</span>{" "}
     <span className="text-[#E5E5E5]/90">
-      https://imgstorage1.vercel.app/api/v1/upload
+      https://tofsir-cdn.vercel.app/api/v1/upload
     </span>{" "}
     \ <br />
     {"  "}-H{" "}

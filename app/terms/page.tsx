@@ -23,7 +23,7 @@ export default function TermsPage() {
           <div className="prose prose-gray max-w-none space-y-8 text-gray-600 leading-relaxed">
             <section>
               <p>
-                Please read these Terms carefully before using ImgStorage. By
+                Please read these Terms carefully before using Tofsir CDN. By
                 signing in and using the platform, you agree to be bound by
                 these terms.
               </p>
@@ -31,12 +31,12 @@ export default function TermsPage() {
 
             <section>
               <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                1. About ImgStorage
+                1. About Tofsir CDN
               </h2>
               <p>
-                ImgStorage is an open-source image storage API that routes
-                uploaded files to a private Telegram group via the Telegram Bot
-                API. ImgStorage does not operate its own file storage
+                Tofsir CDN is an open-source media storage API that routes
+                uploaded files to a private Telegram channel via the Telegram Bot
+                API. Tofsir CDN does not operate its own file storage
                 infrastructure.
               </p>
             </section>
@@ -48,25 +48,25 @@ export default function TermsPage() {
               <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-red-700 text-sm">
                 <p className="font-semibold mb-2">⚠️ Important — Please Read</p>
                 <p>
-                  All images are stored in a private Telegram group. If that
-                  group is deleted, banned, or becomes inaccessible for any
+                  All files are stored in a private Telegram channel. If that
+                  channel is deleted, banned, or becomes inaccessible for any
                   reason,{" "}
                   <strong>
-                    all stored images will be permanently and irreversibly lost
+                    all stored files will be permanently and irreversibly lost
                   </strong>
-                  . ImgStorage does not maintain independent backups of any
+                  . Tofsir CDN does not maintain independent backups of any
                   uploaded files.
                 </p>
               </div>
               <p className="mt-4">
-                ImgStorage makes no guarantee regarding uptime, data
+                Tofsir CDN makes no guarantee regarding uptime, data
                 availability, or service continuity. The service is provided on
                 a best-effort basis only.
               </p>
               <p className="mt-3">
                 If you require guaranteed data persistence, we strongly
-                recommend self-hosting ImgStorage using your own Telegram bot
-                and group.
+                recommend self-hosting Tofsir CDN using your own Telegram bot
+                and channel.
               </p>
             </section>
 
@@ -75,7 +75,7 @@ export default function TermsPage() {
                 3. No Warranty
               </h2>
               <p>
-                ImgStorage is provided "as is" and "as available" without
+                Tofsir CDN is provided "as is" and "as available" without
                 warranty of any kind. We make no warranty that the service will
                 be uninterrupted, error-free, secure, or that uploaded content
                 will be reliably stored or served.
@@ -87,7 +87,7 @@ export default function TermsPage() {
                 4. Limitation of Liability
               </h2>
               <p>
-                ImgStorage and its maintainers shall not be liable for any loss
+                Tofsir CDN and its maintainers shall not be liable for any loss
                 of data, loss of revenue, or any indirect or consequential
                 damages arising from your use of the service, including damages
                 resulting from Telegram's actions or platform changes.
@@ -101,7 +101,7 @@ export default function TermsPage() {
               <p>
                 You agree not to upload content that is illegal, infringes on
                 intellectual property rights, contains malware, or violates
-                Telegram's Terms of Service. ImgStorage reserves the right to
+                Telegram's Terms of Service. Tofsir CDN reserves the right to
                 terminate access for violations without prior notice.
               </p>
             </section>
@@ -111,10 +111,10 @@ export default function TermsPage() {
                 6. Telegram Dependency
               </h2>
               <p>
-                ImgStorage depends on the Telegram Bot API. ImgStorage has no
+                Tofsir CDN depends on the Telegram Bot API. Tofsir CDN has no
                 affiliation with Telegram. Any changes to Telegram's platform or
-                policies may directly affect ImgStorage's functionality.
-                ImgStorage is not responsible for disruptions caused by
+                policies may directly affect Tofsir CDN's functionality.
+                Tofsir CDN is not responsible for disruptions caused by
                 Telegram.
               </p>
             </section>
@@ -126,7 +126,7 @@ export default function TermsPage() {
               <p>
                 You are solely responsible for keeping your API key secure. Do
                 not expose it in public repositories or client-side code.
-                ImgStorage is not liable for unauthorized use resulting from
+                Tofsir CDN is not liable for unauthorized use resulting from
                 compromised keys.
               </p>
             </section>
@@ -136,7 +136,7 @@ export default function TermsPage() {
                 8. Self-Hosting
               </h2>
               <p>
-                ImgStorage is open source. Users who require greater reliability
+                Tofsir CDN is open source. Users who require greater reliability
                 or data control are encouraged to self-host using their own
                 infrastructure. The maintainers are not responsible for
                 self-hosted deployments.
@@ -148,7 +148,7 @@ export default function TermsPage() {
                 9. Changes to Terms
               </h2>
               <p>
-                ImgStorage may update these Terms at any time. Continued use of
+                Tofsir CDN may update these Terms at any time. Continued use of
                 the service constitutes acceptance of any updated Terms.
               </p>
             </section>
@@ -158,7 +158,7 @@ export default function TermsPage() {
                 10. Contact
               </h2>
               <p>
-                Questions about these Terms? Open an issue on the ImgStorage
+                Questions about these Terms? Open an issue on the Tofsir CDN
                 GitHub repository or visit the dashboard.
               </p>
             </section>

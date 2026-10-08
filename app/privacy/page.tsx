@@ -22,8 +22,8 @@ export default function PrivacyPage() {
           <div className="prose prose-gray max-w-none space-y-8 text-gray-600 leading-relaxed">
             <section>
               <p>
-                This Privacy Policy describes how ImgStorage collects, uses, and
-                handles your information. By using ImgStorage, you agree to
+                This Privacy Policy describes how Tofsir CDN collects, uses, and
+                handles your information. By using Tofsir CDN, you agree to
                 these practices.
               </p>
             </section>
@@ -60,9 +60,9 @@ export default function PrivacyPage() {
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 text-yellow-800 text-sm mb-4">
                 <p className="font-semibold mb-2">⚠️ Important</p>
                 <p>
-                  Your actual image files are stored on{" "}
-                  <strong>Telegram's servers</strong>, not on ImgStorage's own
-                  infrastructure. ImgStorage only stores a reference ID. Images
+                  Your actual files are stored on{" "}
+                  <strong>Telegram's servers</strong>, not on Tofsir CDN's own
+                  infrastructure. Tofsir CDN only stores a reference ID. Files
                   served at <strong>/i/:id are publicly accessible</strong> to
                   anyone with the URL — they are not access-controlled by
                   default.
@@ -71,10 +71,10 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-5 space-y-2 text-sm">
                 <li>
                   <strong>Database:</strong> Account info and metadata stored on
-                  NeonDB (PostgreSQL).
+                  Firebase / Firestore.
                 </li>
                 <li>
-                  <strong>Images:</strong> Stored on Telegram's infrastructure
+                  <strong>Media:</strong> Stored on Telegram's infrastructure
                   via the Bot API.
                 </li>
                 <li>
@@ -88,10 +88,10 @@ export default function PrivacyPage() {
                 3. No Guarantee of Privacy or Security
               </h2>
               <p>
-                ImgStorage does not encrypt images before sending them to
-                Telegram. ImgStorage cannot guarantee that uploaded images will
+                Tofsir CDN does not encrypt files before sending them to
+                Telegram. Tofsir CDN cannot guarantee that uploaded files will
                 remain private or secure. Do not upload sensitive, private, or
-                personally identifiable images using the hosted service.
+                personally identifiable files using the hosted service.
               </p>
             </section>
 
@@ -103,9 +103,9 @@ export default function PrivacyPage() {
                 <li>
                   To authenticate your identity and maintain your session.
                 </li>
-                <li>To associate images with your account and API key.</li>
+                <li>To associate media with your account and API key.</li>
                 <li>To display usage statistics in your dashboard.</li>
-                <li>To serve images via the /i/:slug endpoint.</li>
+                <li>To serve files via the /i/:slug endpoint.</li>
               </ul>
               <p className="mt-3">
                 We do not use your data for advertising or sell it to third
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
               </h2>
               <ul className="list-disc pl-5 space-y-2 text-sm">
                 <li>
-                  <strong>Telegram:</strong> Stores your image files.{" "}
+                  <strong>Telegram:</strong> Stores your files.{" "}
                   <a
                     href="https://telegram.org/privacy"
                     className="underline"
@@ -129,13 +129,13 @@ export default function PrivacyPage() {
                   </a>
                 </li>
                 <li>
-                  <strong>NeonDB:</strong> Hosts our database.{" "}
+                  <strong>Firebase:</strong> Hosts our database.{" "}
                   <a
-                    href="https://neon.tech/privacy"
+                    href="https://firebase.google.com/support/privacy"
                     className="underline"
                     target="_blank"
                   >
-                    NeonDB Privacy Policy
+                    Firebase Privacy Policy
                   </a>
                 </li>
                 <li>
@@ -148,9 +148,6 @@ export default function PrivacyPage() {
                     Vercel Privacy Policy
                   </a>
                 </li>
-                <li>
-                  <strong>Google / GitHub:</strong> Used for OAuth sign-in only.
-                </li>
               </ul>
             </section>
 
@@ -159,7 +156,7 @@ export default function PrivacyPage() {
                 6. Data Deletion
               </h2>
               <p>
-                Deleting an image removes the metadata from our database and
+                Deleting a file removes the metadata from our database and
                 sends a deletion request to Telegram. To delete your account
                 entirely, contact us via GitHub or the dashboard.
               </p>
@@ -170,7 +167,7 @@ export default function PrivacyPage() {
                 7. Self-Hosting
               </h2>
               <p>
-                For complete control over your data, self-host ImgStorage using
+                For complete control over your data, self-host Tofsir CDN using
                 your own Telegram bot and infrastructure. When self-hosting, you
                 are the data controller and responsible for your own compliance.
               </p>
@@ -181,10 +178,10 @@ export default function PrivacyPage() {
                 8. Contact
               </h2>
               <p>
-                Questions about this policy? Open an issue on the ImgStorage
+                Questions about this policy? Open an issue on the Tofsir CDN
                 GitHub repository or visit{" "}
                 <a
-                  href="https://imgstorage1.vercel.app/dashboard"
+                  href="https://tofsir-cdn.vercel.app/dashboard"
                   className="underline"
                 >
                   the dashboard
