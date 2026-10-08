@@ -514,10 +514,10 @@ export default function LandingPage() {
       <section className="max-w-[1200px] mx-auto px-6 py-[80px] border-t border-[#E5E5E5]/10">
         <div className="text-center mb-12">
           <h2 className="text-3xl tracking-tight mb-4 text-[#E5E5E5]">
-            আমার ইউটিউব চ্যানেলকে সাপোর্ট করুন! ❤️
+            Please Support My YouTube Channel! ❤️
           </h2>
           <p className="text-[#E5E5E5]/60 text-lg max-w-xl mx-auto leading-[1.8]">
-            যেহেতু এখনও এই প্রজেক্টের কোনো সেটাপ ভিডিও আপলোড করা হয়নি, তাই চ্যানেলটি সাবস্ক্রাইব করে পাশেই থাকুন।
+            Since I haven't uploaded a setup video for this project yet, please subscribe to my channel to show your support.
           </p>
         </div>
         <div className="max-w-4xl mx-auto border border-[#E5E5E5]/10 rounded-2xl overflow-hidden bg-[#0A0A0A] shadow-2xl aspect-video relative">
